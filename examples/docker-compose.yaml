@@ -1,0 +1,13 @@
+services:
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.112.0
+    container_name: gpu-otel-collector
+    restart: unless-stopped
+    command: ["--config=${OTEL_CONFIG:-/etc/otelcol/config.yaml}"]
+    ports:
+      - "13133:13133"
+    environment:
+      PROMETHEUS_OTLP_ENDPOINT: ${PROMETHEUS_OTLP_ENDPOINT}
+    volumes:
+      - ../configs/all-vendors-template.yaml:/etc/otelcol/config.yaml:ro
+

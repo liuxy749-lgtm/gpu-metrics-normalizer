@@ -1,0 +1,23 @@
+# Huawei Ascend / 华为昇腾 910B/910C template.
+#
+# Field deployment has verified normalized output:
+#   gpu_vendor in {"Huawei", "huawei"}
+#   gpu_type examples: bm-ascend-910b-64g, Ascend910-Ascend-V1
+#
+# TODO before open-source GA:
+#   Add raw npu-exporter sample output and strict metric rename rules.
+processors:
+  metricstransform/huawei_template:
+    transforms:
+      - include: ^(npu|ascend|huawei).*
+        match_type: regexp
+        action: update
+        operations:
+          - {action: add_label, new_label: gpu_vendor, new_value: huawei}
+  transform/huawei_units_template:
+    error_mode: ignore
+    metric_statements:
+      - context: datapoint
+        statements:
+          - set(value_double, value_double / 100.0) where metric.name == "gpu_utilization_ratio" and value_double > 1.0
+          - set(value_double, value_double / 100.0) where metric.name == "gpu_memory_usage_ratio" and value_double > 1.0

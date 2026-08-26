@@ -1,0 +1,22 @@
+# Tsingmicro / 清微 TX81/TX8110 tx-exporter normalization.
+processors:
+  filter/tsingmicro:
+    error_mode: ignore
+    metrics:
+      metric:
+        - not IsMatch(name, "^TSINGMICRO_KUIPER_TEMP$|^TSINGMICRO_KUIPER_POWER_USAGE$|^TSINGMICRO_KUIPER_MEMORY_TOTAL$|^TSINGMICRO_KUIPER_MEMORY_USING$|^TSINGMICRO_KUIPER_UTILIZATION$|^TSINGMICRO_KUIPER_HEALTH_STATUS$")
+  metricstransform/tsingmicro:
+    transforms:
+      - include: ^TSINGMICRO_.*
+        match_type: regexp
+        action: update
+        operations:
+          - {action: update_label, label: deviceID, new_label: dev_id}
+          - {action: update_label, label: cardName, new_label: gpu_type}
+          - {action: add_label, new_label: gpu_vendor, new_value: tsingmicro}
+      - {include: TSINGMICRO_KUIPER_TEMP, match_type: strict, action: update, new_name: gpu_temperature}
+      - {include: TSINGMICRO_KUIPER_POWER_USAGE, match_type: strict, action: update, new_name: gpu_power_usage_watts}
+      - {include: TSINGMICRO_KUIPER_UTILIZATION, match_type: strict, action: update, new_name: gpu_utilization_ratio}
+      - {include: TSINGMICRO_KUIPER_MEMORY_USING, match_type: strict, action: update, new_name: gpu_memory_used_bytes}
+      - {include: TSINGMICRO_KUIPER_MEMORY_TOTAL, match_type: strict, action: update, new_name: gpu_memory_total_bytes}
+      - {include: TSINGMICRO_KUIPER_HEALTH_STATUS, match_type: strict, action: update, new_name: gpu_state}

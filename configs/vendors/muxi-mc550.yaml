@@ -1,0 +1,25 @@
+# Muxi / 沐曦 MC550 mx-exporter normalization.
+processors:
+  filter/muxi:
+    error_mode: ignore
+    metrics:
+      metric:
+        - not IsMatch(name, "^core_temp$|^bway_power$|^gpu_usage$|^memory_total$|^memory_used$")
+      datapoint:
+        - metric.name == "bway_power" and attributes["wayId"] != "0"
+        - metric.name == "memory_total" and attributes["memType"] != "vram"
+        - metric.name == "memory_used" and attributes["memType"] != "vram"
+  metricstransform/muxi:
+    transforms:
+      - include: ^(core_temp|bway_power|gpu_usage|memory_total|memory_used)$
+        match_type: regexp
+        action: update
+        operations:
+          - {action: update_label, label: deviceId, new_label: dev_id}
+          - {action: add_label, new_label: gpu_type, new_value: "Muxi MC550"}
+          - {action: add_label, new_label: gpu_vendor, new_value: muxi}
+      - {include: core_temp, match_type: strict, action: update, new_name: gpu_temperature}
+      - {include: bway_power, match_type: strict, action: update, new_name: gpu_power_usage_watts}
+      - {include: gpu_usage, match_type: strict, action: update, new_name: gpu_utilization_ratio}
+      - {include: memory_total, match_type: strict, action: update, new_name: gpu_memory_total_bytes}
+      - {include: memory_used, match_type: strict, action: update, new_name: gpu_memory_used_bytes}

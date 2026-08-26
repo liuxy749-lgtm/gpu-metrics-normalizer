@@ -1,0 +1,21 @@
+# Moore Threads S5000 / mtgpu-exporter normalization.
+processors:
+  filter/mthreads:
+    error_mode: ignore
+    metrics:
+      metric:
+        - not IsMatch(name, "^mtgpu_gpu_temp$|^mtgpu_power_usage_milliwatts$|^mtgpu_gpu_utilization$|^mtgpu_memory_total_bytes$|^mtgpu_memory_used_bytes$")
+  metricstransform/mthreads:
+    transforms:
+      - include: ^mtgpu_.*
+        match_type: regexp
+        action: update
+        operations:
+          - {action: update_label, label: index, new_label: dev_id}
+          - {action: update_label, label: name, new_label: gpu_type}
+          - {action: add_label, new_label: gpu_vendor, new_value: mthreads}
+      - {include: mtgpu_gpu_temp, match_type: strict, action: update, new_name: gpu_temperature}
+      - {include: mtgpu_power_usage_milliwatts, match_type: strict, action: update, new_name: gpu_power_usage_watts}
+      - {include: mtgpu_gpu_utilization, match_type: strict, action: update, new_name: gpu_utilization_ratio}
+      - {include: mtgpu_memory_total_bytes, match_type: strict, action: update, new_name: gpu_memory_total_bytes}
+      - {include: mtgpu_memory_used_bytes, match_type: strict, action: update, new_name: gpu_memory_used_bytes}

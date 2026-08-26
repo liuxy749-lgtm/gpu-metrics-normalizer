@@ -1,0 +1,350 @@
+receivers:
+  prometheus/nvidia:
+    config:
+      scrape_configs:
+        - job_name: gpu-nvidia-dcgm
+          honor_timestamps: false
+          scrape_interval: 30s
+          scrape_timeout: 15s
+          static_configs:
+            - targets: ["REPLACE_WITH_NVIDIA_HOST:9400"]
+              labels: {region: "example-region", zone: "example-zone"}
+
+  prometheus/mthreads:
+    config:
+      scrape_configs:
+        - job_name: gpu-mthreads
+          scrape_interval: 30s
+          scrape_timeout: 15s
+          static_configs:
+            - targets: ["REPLACE_WITH_MTHREADS_HOST:21001"]
+              labels: {region: "example-region", zone: "example-zone"}
+
+  prometheus/iluvatar:
+    config:
+      scrape_configs:
+        - job_name: gpu-iluvatar
+          scrape_interval: 30s
+          scrape_timeout: 15s
+          static_configs:
+            - targets: ["REPLACE_WITH_ILUVATAR_HOST:21001"]
+              labels: {region: "example-region", zone: "example-zone"}
+
+  prometheus/hygon:
+    config:
+      scrape_configs:
+        - job_name: gpu-hygon-dcu
+          scrape_interval: 30s
+          scrape_timeout: 15s
+          static_configs:
+            - targets: ["REPLACE_WITH_HYGON_HOST:21001"]
+              labels: {region: "example-region", zone: "example-zone"}
+
+  prometheus/muxi:
+    config:
+      scrape_configs:
+        - job_name: gpu-muxi
+          scrape_interval: 30s
+          scrape_timeout: 15s
+          static_configs:
+            - targets: ["REPLACE_WITH_MUXI_HOST:8100"]
+              labels: {region: "example-region", zone: "example-zone"}
+
+  prometheus/tsingmicro:
+    config:
+      scrape_configs:
+        - job_name: gpu-tsingmicro
+          scrape_interval: 30s
+          scrape_timeout: 15s
+          static_configs:
+            - targets: ["REPLACE_WITH_TSINGMICRO_HOST:21001"]
+              labels: {region: "example-region", zone: "example-zone"}
+
+  prometheus/huawei:
+    config:
+      scrape_configs:
+        - job_name: gpu-huawei-ascend
+          scrape_interval: 30s
+          scrape_timeout: 15s
+          static_configs:
+            - targets: ["REPLACE_WITH_ASCEND_HOST:8100"]
+              labels: {region: "example-region", zone: "example-zone"}
+
+  prometheus/kunlunxin:
+    config:
+      scrape_configs:
+        - job_name: gpu-kunlunxin
+          scrape_interval: 30s
+          scrape_timeout: 15s
+          static_configs:
+            - targets: ["REPLACE_WITH_KUNLUNXIN_HOST:21001"]
+              labels: {region: "example-region", zone: "example-zone"}
+
+  prometheus/enflame:
+    config:
+      scrape_configs:
+        - job_name: gpu-enflame
+          scrape_interval: 30s
+          scrape_timeout: 15s
+          static_configs:
+            - targets: ["REPLACE_WITH_ENFLAME_HOST:21001"]
+              labels: {region: "example-region", zone: "example-zone"}
+
+processors:
+  filter/nvidia:
+    error_mode: ignore
+    metrics:
+      metric:
+        - not IsMatch(name, "^DCGM_FI_DEV_GPU_TEMP$|^DCGM_FI_DEV_POWER_USAGE$|^DCGM_FI_DEV_GPU_UTIL$|^DCGM_FI_DEV_MEM_COPY_UTIL$|^DCGM_FI_DEV_FB_FREE$|^DCGM_FI_DEV_FB_USED$|^DCGM_FI_DEV_XID_ERRORS$")
+  metricstransform/nvidia:
+    transforms:
+      - include: ^DCGM_.*
+        match_type: regexp
+        action: update
+        operations:
+          - {action: update_label, label: gpu, new_label: dev_id}
+          - {action: update_label, label: Hostname, new_label: hostname}
+          - {action: update_label, label: modelName, new_label: gpu_type}
+          - {action: add_label, new_label: gpu_vendor, new_value: nvidia}
+      - {include: DCGM_FI_DEV_GPU_TEMP, match_type: strict, action: update, new_name: gpu_temperature}
+      - {include: DCGM_FI_DEV_POWER_USAGE, match_type: strict, action: update, new_name: gpu_power_usage_watts}
+      - {include: DCGM_FI_DEV_GPU_UTIL, match_type: strict, action: update, new_name: gpu_utilization_ratio}
+      - {include: DCGM_FI_DEV_MEM_COPY_UTIL, match_type: strict, action: update, new_name: gpu_memory_usage_ratio}
+      - {include: DCGM_FI_DEV_FB_USED, match_type: strict, action: update, new_name: gpu_memory_used_bytes}
+      - {include: DCGM_FI_DEV_FB_FREE, match_type: strict, action: update, new_name: gpu_memory_free_bytes}
+      - {include: DCGM_FI_DEV_XID_ERRORS, match_type: strict, action: update, new_name: gpu_state}
+
+  filter/mthreads:
+    error_mode: ignore
+    metrics:
+      metric:
+        - not IsMatch(name, "^mtgpu_gpu_temp$|^mtgpu_power_usage_milliwatts$|^mtgpu_gpu_utilization$|^mtgpu_memory_total_bytes$|^mtgpu_memory_used_bytes$")
+  metricstransform/mthreads:
+    transforms:
+      - include: ^mtgpu_.*
+        match_type: regexp
+        action: update
+        operations:
+          - {action: update_label, label: index, new_label: dev_id}
+          - {action: update_label, label: name, new_label: gpu_type}
+          - {action: add_label, new_label: gpu_vendor, new_value: mthreads}
+      - {include: mtgpu_gpu_temp, match_type: strict, action: update, new_name: gpu_temperature}
+      - {include: mtgpu_power_usage_milliwatts, match_type: strict, action: update, new_name: gpu_power_usage_watts}
+      - {include: mtgpu_gpu_utilization, match_type: strict, action: update, new_name: gpu_utilization_ratio}
+      - {include: mtgpu_memory_total_bytes, match_type: strict, action: update, new_name: gpu_memory_total_bytes}
+      - {include: mtgpu_memory_used_bytes, match_type: strict, action: update, new_name: gpu_memory_used_bytes}
+
+  filter/iluvatar:
+    error_mode: ignore
+    metrics:
+      metric:
+        - not IsMatch(name, "^ix_gpu_temperature$|^ix_power_usage$|^ix_gpu_utilization$|^ix_mem_total$|^ix_mem_used$")
+  metricstransform/iluvatar:
+    transforms:
+      - include: ^ix_.*
+        match_type: regexp
+        action: update
+        operations:
+          - {action: update_label, label: gpu, new_label: dev_id}
+          - {action: update_label, label: name, new_label: gpu_type}
+          - {action: update_label, label: node_name, new_label: hostname}
+          - {action: add_label, new_label: gpu_vendor, new_value: iluvatar}
+      - {include: ix_gpu_temperature, match_type: strict, action: update, new_name: gpu_temperature}
+      - {include: ix_power_usage, match_type: strict, action: update, new_name: gpu_power_usage_watts}
+      - {include: ix_gpu_utilization, match_type: strict, action: update, new_name: gpu_utilization_ratio}
+      - {include: ix_mem_total, match_type: strict, action: update, new_name: gpu_memory_total_bytes}
+      - {include: ix_mem_used, match_type: strict, action: update, new_name: gpu_memory_used_bytes}
+
+  filter/hygon:
+    error_mode: ignore
+    metrics:
+      metric:
+        - not IsMatch(name, "^dcu_temp$|^dcu_power_usage$|^dcu_utilizationrate$|^dcu_memorycap_bytes$|^dcu_usedmemory_bytes$|^dcu_memory_remaining$")
+  metricstransform/hygon:
+    transforms:
+      - include: ^dcu_.*
+        match_type: regexp
+        action: update
+        operations:
+          - {action: update_label, label: minor_number, new_label: dev_id}
+          - {action: update_label, label: name, new_label: gpu_type}
+          - {action: add_label, new_label: gpu_vendor, new_value: hygon}
+      - {include: dcu_temp, match_type: strict, action: update, new_name: gpu_temperature}
+      - {include: dcu_power_usage, match_type: strict, action: update, new_name: gpu_power_usage_watts}
+      - {include: dcu_utilizationrate, match_type: strict, action: update, new_name: gpu_utilization_ratio}
+      - {include: dcu_memorycap_bytes, match_type: strict, action: update, new_name: gpu_memory_total_bytes}
+      - {include: dcu_usedmemory_bytes, match_type: strict, action: update, new_name: gpu_memory_used_bytes}
+      - {include: dcu_memory_remaining, match_type: strict, action: update, new_name: gpu_memory_free_bytes}
+
+  filter/muxi:
+    error_mode: ignore
+    metrics:
+      metric:
+        - not IsMatch(name, "^core_temp$|^bway_power$|^gpu_usage$|^memory_total$|^memory_used$")
+      datapoint:
+        - metric.name == "bway_power" and attributes["wayId"] != "0"
+        - metric.name == "memory_total" and attributes["memType"] != "vram"
+        - metric.name == "memory_used" and attributes["memType"] != "vram"
+  metricstransform/muxi:
+    transforms:
+      - include: ^(core_temp|bway_power|gpu_usage|memory_total|memory_used)$
+        match_type: regexp
+        action: update
+        operations:
+          - {action: update_label, label: deviceId, new_label: dev_id}
+          - {action: add_label, new_label: gpu_type, new_value: "Muxi MC550"}
+          - {action: add_label, new_label: gpu_vendor, new_value: muxi}
+      - {include: core_temp, match_type: strict, action: update, new_name: gpu_temperature}
+      - {include: bway_power, match_type: strict, action: update, new_name: gpu_power_usage_watts}
+      - {include: gpu_usage, match_type: strict, action: update, new_name: gpu_utilization_ratio}
+      - {include: memory_total, match_type: strict, action: update, new_name: gpu_memory_total_bytes}
+      - {include: memory_used, match_type: strict, action: update, new_name: gpu_memory_used_bytes}
+
+  filter/tsingmicro:
+    error_mode: ignore
+    metrics:
+      metric:
+        - not IsMatch(name, "^TSINGMICRO_KUIPER_TEMP$|^TSINGMICRO_KUIPER_POWER_USAGE$|^TSINGMICRO_KUIPER_MEMORY_TOTAL$|^TSINGMICRO_KUIPER_MEMORY_USING$|^TSINGMICRO_KUIPER_UTILIZATION$|^TSINGMICRO_KUIPER_HEALTH_STATUS$")
+  metricstransform/tsingmicro:
+    transforms:
+      - include: ^TSINGMICRO_.*
+        match_type: regexp
+        action: update
+        operations:
+          - {action: update_label, label: deviceID, new_label: dev_id}
+          - {action: update_label, label: cardName, new_label: gpu_type}
+          - {action: add_label, new_label: gpu_vendor, new_value: tsingmicro}
+      - {include: TSINGMICRO_KUIPER_TEMP, match_type: strict, action: update, new_name: gpu_temperature}
+      - {include: TSINGMICRO_KUIPER_POWER_USAGE, match_type: strict, action: update, new_name: gpu_power_usage_watts}
+      - {include: TSINGMICRO_KUIPER_UTILIZATION, match_type: strict, action: update, new_name: gpu_utilization_ratio}
+      - {include: TSINGMICRO_KUIPER_MEMORY_USING, match_type: strict, action: update, new_name: gpu_memory_used_bytes}
+      - {include: TSINGMICRO_KUIPER_MEMORY_TOTAL, match_type: strict, action: update, new_name: gpu_memory_total_bytes}
+      - {include: TSINGMICRO_KUIPER_HEALTH_STATUS, match_type: strict, action: update, new_name: gpu_state}
+
+  # The following processors are templates for vendors whose normalized output
+  # was verified in the field, but raw exporter samples should be added before
+  # publishing strict production mappings.
+  metricstransform/huawei_template:
+    transforms:
+      - include: ^(npu|ascend|huawei).*
+        match_type: regexp
+        action: update
+        operations:
+          - {action: add_label, new_label: gpu_vendor, new_value: huawei}
+
+  metricstransform/kunlunxin_template:
+    transforms:
+      - include: ^(xpu|kunlun|klx).*
+        match_type: regexp
+        action: update
+        operations:
+          - {action: add_label, new_label: gpu_vendor, new_value: kunlunxin}
+
+  metricstransform/enflame_template:
+    transforms:
+      - include: ^(s60|enflame).*
+        match_type: regexp
+        action: update
+        operations:
+          - {action: add_label, new_label: gpu_vendor, new_value: enflame}
+
+  transform/extract_ip_21001:
+    error_mode: ignore
+    metric_statements:
+      - context: datapoint
+        statements:
+          - set(attributes["ip"], Substring(resource.attributes["service.instance.id"], 0, Len(resource.attributes["service.instance.id"]) - 6)) where resource.attributes["service.instance.id"] != nil
+
+  transform/extract_ip_9400:
+    error_mode: ignore
+    metric_statements:
+      - context: datapoint
+        statements:
+          - set(attributes["ip"], Substring(resource.attributes["service.instance.id"], 0, Len(resource.attributes["service.instance.id"]) - 5)) where resource.attributes["service.instance.id"] != nil
+
+  transform/common_units:
+    error_mode: ignore
+    metric_statements:
+      - context: datapoint
+        statements:
+          - set(value_double, value_double / 100.0) where metric.name == "gpu_utilization_ratio" and value_double > 1.0
+          - set(value_double, value_double / 100.0) where metric.name == "gpu_memory_usage_ratio" and value_double > 1.0
+          - set(value_double, value_double / 1000.0) where metric.name == "gpu_power_usage_watts" and (attributes["gpu_vendor"] == "mthreads" or attributes["gpu_vendor"] == "muxi")
+          - set(value_double, value_double * 1048576.0) where (metric.name == "gpu_memory_total_bytes" or metric.name == "gpu_memory_used_bytes" or metric.name == "gpu_memory_free_bytes") and (attributes["gpu_vendor"] == "nvidia" or attributes["gpu_vendor"] == "iluvatar")
+          - set(value_double, value_double * 1024.0) where (metric.name == "gpu_memory_total_bytes" or metric.name == "gpu_memory_used_bytes") and attributes["gpu_vendor"] == "muxi"
+          - delete_key(attributes, "container")
+          - delete_key(attributes, "node")
+          - delete_key(attributes, "pod")
+          - delete_key(attributes, "namespace")
+          - delete_key(attributes, "wayId")
+          - delete_key(attributes, "memType")
+
+  metricsgeneration/memory_total:
+    rules:
+      - name: gpu_memory_total_bytes
+        type: calculate
+        metric1: gpu_memory_used_bytes
+        metric2: gpu_memory_free_bytes
+        operation: add
+        unit: By
+
+  metricsgeneration/memory_usage_ratio:
+    rules:
+      - name: gpu_memory_usage_ratio
+        type: calculate
+        metric1: gpu_memory_used_bytes
+        metric2: gpu_memory_total_bytes
+        operation: divide
+        unit: "1"
+
+  batch:
+    send_batch_size: 256
+    timeout: 10s
+
+exporters:
+  otlphttp/prometheus:
+    endpoint: ${env:PROMETHEUS_OTLP_ENDPOINT}
+    metrics_endpoint: ${env:PROMETHEUS_OTLP_ENDPOINT}
+    tls:
+      insecure: true
+    retry_on_failure:
+      enabled: true
+      initial_interval: 5s
+      max_interval: 30s
+      max_elapsed_time: 300s
+    sending_queue:
+      enabled: true
+      num_consumers: 2
+      queue_size: 2000
+
+extensions:
+  health_check:
+    endpoint: 0.0.0.0:13133
+
+service:
+  extensions: [health_check]
+  pipelines:
+    metrics/nvidia:
+      receivers: [prometheus/nvidia]
+      processors: [filter/nvidia, metricstransform/nvidia, transform/extract_ip_9400, transform/common_units, metricsgeneration/memory_total, metricsgeneration/memory_usage_ratio, batch]
+      exporters: [otlphttp/prometheus]
+    metrics/mthreads:
+      receivers: [prometheus/mthreads]
+      processors: [filter/mthreads, metricstransform/mthreads, transform/extract_ip_21001, transform/common_units, metricsgeneration/memory_usage_ratio, batch]
+      exporters: [otlphttp/prometheus]
+    metrics/iluvatar:
+      receivers: [prometheus/iluvatar]
+      processors: [filter/iluvatar, metricstransform/iluvatar, transform/extract_ip_21001, transform/common_units, metricsgeneration/memory_usage_ratio, batch]
+      exporters: [otlphttp/prometheus]
+    metrics/hygon:
+      receivers: [prometheus/hygon]
+      processors: [filter/hygon, metricstransform/hygon, transform/extract_ip_21001, transform/common_units, metricsgeneration/memory_usage_ratio, batch]
+      exporters: [otlphttp/prometheus]
+    metrics/muxi:
+      receivers: [prometheus/muxi]
+      processors: [filter/muxi, metricstransform/muxi, transform/extract_ip_21001, transform/common_units, metricsgeneration/memory_usage_ratio, batch]
+      exporters: [otlphttp/prometheus]
+    metrics/tsingmicro:
+      receivers: [prometheus/tsingmicro]
+      processors: [filter/tsingmicro, metricstransform/tsingmicro, transform/extract_ip_21001, transform/common_units, metricsgeneration/memory_usage_ratio, batch]
+      exporters: [otlphttp/prometheus]

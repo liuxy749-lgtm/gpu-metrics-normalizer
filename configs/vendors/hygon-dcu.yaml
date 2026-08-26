@@ -1,0 +1,22 @@
+# Hygon DCU / 海光 BW1000/BW200 dcu-exporter normalization.
+processors:
+  filter/hygon:
+    error_mode: ignore
+    metrics:
+      metric:
+        - not IsMatch(name, "^dcu_temp$|^dcu_power_usage$|^dcu_utilizationrate$|^dcu_memorycap_bytes$|^dcu_usedmemory_bytes$|^dcu_memory_remaining$")
+  metricstransform/hygon:
+    transforms:
+      - include: ^dcu_.*
+        match_type: regexp
+        action: update
+        operations:
+          - {action: update_label, label: minor_number, new_label: dev_id}
+          - {action: update_label, label: name, new_label: gpu_type}
+          - {action: add_label, new_label: gpu_vendor, new_value: hygon}
+      - {include: dcu_temp, match_type: strict, action: update, new_name: gpu_temperature}
+      - {include: dcu_power_usage, match_type: strict, action: update, new_name: gpu_power_usage_watts}
+      - {include: dcu_utilizationrate, match_type: strict, action: update, new_name: gpu_utilization_ratio}
+      - {include: dcu_memorycap_bytes, match_type: strict, action: update, new_name: gpu_memory_total_bytes}
+      - {include: dcu_usedmemory_bytes, match_type: strict, action: update, new_name: gpu_memory_used_bytes}
+      - {include: dcu_memory_remaining, match_type: strict, action: update, new_name: gpu_memory_free_bytes}

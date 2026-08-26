@@ -1,0 +1,25 @@
+# NVIDIA DCGM Exporter normalization.
+# Applies to H100, A800, H20, A100, V100, H800, B200, 4090, 3090.
+processors:
+  filter/nvidia:
+    error_mode: ignore
+    metrics:
+      metric:
+        - not IsMatch(name, "^DCGM_FI_DEV_GPU_TEMP$|^DCGM_FI_DEV_POWER_USAGE$|^DCGM_FI_DEV_GPU_UTIL$|^DCGM_FI_DEV_MEM_COPY_UTIL$|^DCGM_FI_DEV_FB_FREE$|^DCGM_FI_DEV_FB_USED$|^DCGM_FI_DEV_XID_ERRORS$")
+  metricstransform/nvidia:
+    transforms:
+      - include: ^DCGM_.*
+        match_type: regexp
+        action: update
+        operations:
+          - {action: update_label, label: gpu, new_label: dev_id}
+          - {action: update_label, label: Hostname, new_label: hostname}
+          - {action: update_label, label: modelName, new_label: gpu_type}
+          - {action: add_label, new_label: gpu_vendor, new_value: nvidia}
+      - {include: DCGM_FI_DEV_GPU_TEMP, match_type: strict, action: update, new_name: gpu_temperature}
+      - {include: DCGM_FI_DEV_POWER_USAGE, match_type: strict, action: update, new_name: gpu_power_usage_watts}
+      - {include: DCGM_FI_DEV_GPU_UTIL, match_type: strict, action: update, new_name: gpu_utilization_ratio}
+      - {include: DCGM_FI_DEV_MEM_COPY_UTIL, match_type: strict, action: update, new_name: gpu_memory_usage_ratio}
+      - {include: DCGM_FI_DEV_FB_USED, match_type: strict, action: update, new_name: gpu_memory_used_bytes}
+      - {include: DCGM_FI_DEV_FB_FREE, match_type: strict, action: update, new_name: gpu_memory_free_bytes}
+      - {include: DCGM_FI_DEV_XID_ERRORS, match_type: strict, action: update, new_name: gpu_state}

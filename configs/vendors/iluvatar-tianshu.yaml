@@ -1,0 +1,23 @@
+# Iluvatar / 天数智芯 ix-exporter normalization.
+# Applies to BIV100, BIV150, MRV100, TGV200 when using ix-exporter output.
+processors:
+  filter/iluvatar:
+    error_mode: ignore
+    metrics:
+      metric:
+        - not IsMatch(name, "^ix_gpu_temperature$|^ix_power_usage$|^ix_gpu_utilization$|^ix_mem_total$|^ix_mem_used$")
+  metricstransform/iluvatar:
+    transforms:
+      - include: ^ix_.*
+        match_type: regexp
+        action: update
+        operations:
+          - {action: update_label, label: gpu, new_label: dev_id}
+          - {action: update_label, label: name, new_label: gpu_type}
+          - {action: update_label, label: node_name, new_label: hostname}
+          - {action: add_label, new_label: gpu_vendor, new_value: iluvatar}
+      - {include: ix_gpu_temperature, match_type: strict, action: update, new_name: gpu_temperature}
+      - {include: ix_power_usage, match_type: strict, action: update, new_name: gpu_power_usage_watts}
+      - {include: ix_gpu_utilization, match_type: strict, action: update, new_name: gpu_utilization_ratio}
+      - {include: ix_mem_total, match_type: strict, action: update, new_name: gpu_memory_total_bytes}
+      - {include: ix_mem_used, match_type: strict, action: update, new_name: gpu_memory_used_bytes}
