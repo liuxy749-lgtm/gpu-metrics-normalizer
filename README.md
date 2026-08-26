@@ -2,8 +2,6 @@
 
 这套配置用于把不同厂商 GPU/NPU/加速卡 exporter 的 Prometheus 指标，通过 OpenTelemetry Collector 归一化为一组统一指标，便于中心 Prometheus、Grafana、资源治理平台和告警系统统一消费。
 
-本仓库只关注“厂商 exporter 原始指标 → OpenTelemetry Collector → 标准化 `gpu_*` 指标”的归一化方案，不包含资产系统、团队归属、资源分配或内部部署节点信息。
-
 当前现场已验证归一化输出覆盖：
 
 - NVIDIA：H100、A800、H20、A100、V100、H800、B200、4090、3090
@@ -15,9 +13,7 @@
 - 海光：BW1000、BW200/DCU
 - 清微：TX81、TX8110
 - 燧原：S60
-- 寒武纪：MLU590（如需保留，可继续补配置）
-
-> 开源前注意：本目录中的配置均已去掉现场 IP、内网域名、临时下载链接、账号密码，只保留通用映射逻辑和占位符。
+- 寒武纪：MLU590（待补充）
 
 ## 统一输出指标
 
@@ -122,13 +118,6 @@ gpu-otel-normalization/
    count by(gpu_vendor,gpu_type)(gpu_power_usage_watts)
    count by(gpu_vendor,gpu_type)(gpu_temperature)
    ```
-
-## 开源前 TODO
-
-- [ ] 为华为昇腾、昆仑芯、燧原补充更多原始 exporter 样例输出。
-- [ ] 为每个厂商增加 `sample-metrics/*.prom` 样例文件。
-- [ ] 增加 OTel Collector 配置 CI 校验。
-- [ ] 补充 Grafana dashboard 示例。
 
 ## 现场经验
 
