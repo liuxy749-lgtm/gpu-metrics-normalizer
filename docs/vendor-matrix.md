@@ -12,7 +12,7 @@
 | 昆仑芯 | P800 | xpu-exporter | 可自定义，如 `9507`、`21001` | `configs/vendors/kunlunxin-p800.yaml` | 完整 | temperature, power, util, mem total/used/free/ratio, state, xid/ecc/link | 已验证 |
 | 海光 | BW1000/BW200/DCU | dcu-exporter | 可自定义，如 `9507`、`21001` | `configs/vendors/hygon-dcu.yaml` | 完整 | temperature, power, util, mem total/used/free/ratio | 已验证 |
 | 清微 | TX81/TX8110 | tx-exporter | 可自定义，如 `21001` | `configs/vendors/tsingmicro-tx.yaml` | 完整 | temperature, power, util, mem total/used/ratio, state | 已验证 |
-| 燧原 | S60 | enflame/s60 exporter / GCU normalizer | 可自定义，如 `21001` | `configs/vendors/enflame-s60.yaml` | 当前接入样例为预归一化输出 | temperature, power, util, mem total/used/free/ratio, clocks | 已验证 |
+| 燧原 | S60 | enflame/s60 exporter / GCU normalizer | 可自定义，如 `21001` | `configs/vendors/enflame-s60.yaml` | 已验证预归一化输出 | temperature, power, util, mem total/used/free/ratio, clocks | 已验证 |
 | 寒武纪 | MLU590 | 待确认 | 待确认 | 暂无 | 待定 | 暂不提供 | 暂未配置 |
 
 ## 原始指标映射
@@ -125,7 +125,7 @@ node_xpu_xpuDevicesNum
 
 ### 燧原 / Enflame S60
 
-当前 S60 接入样例使用的是预归一化 GCU exporter / normalizer 输出：输入 OTel 前已经是 `gpu_*` 风格指标，因此这里展示的是 OTel 输入端可见的原始指标名。
+已验证的 S60 接入方式使用预归一化 GCU exporter / normalizer 输出：输入 OTel 前已经是 `gpu_*` 风格指标，OTel 只补充通用标签。因此这里展示的是 OTel 输入端可见的原始指标名。
 
 | 原始指标 | 归一化指标 | 说明 |
 |---|---|---|
