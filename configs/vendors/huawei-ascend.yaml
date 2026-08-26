@@ -1,5 +1,8 @@
 # Huawei Ascend / 华为昇腾 910B/910C npu-exporter normalization.
 #
+# Verified exporter:
+#   ascendai/npu-exporter:v7.3.1-arm64
+#
 # Verified raw metric family:
 #   npu_chip_info_*
 #

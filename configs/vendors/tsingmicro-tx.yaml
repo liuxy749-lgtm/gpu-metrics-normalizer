@@ -1,4 +1,7 @@
 # Tsingmicro / 清微 TX81/TX8110 tx-exporter normalization.
+#
+# Verified exporter:
+#   tx-exporter v2.5.0
 processors:
   filter/tsingmicro:
     error_mode: ignore

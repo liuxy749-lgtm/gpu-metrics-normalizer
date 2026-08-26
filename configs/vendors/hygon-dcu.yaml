@@ -1,4 +1,7 @@
 # Hygon DCU / 海光 BW1000/BW200 dcu-exporter normalization.
+#
+# Verified exporter:
+#   dcu-exporter:v2.4.1
 processors:
   filter/hygon:
     error_mode: ignore

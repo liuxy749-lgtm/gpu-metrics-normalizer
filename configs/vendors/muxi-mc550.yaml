@@ -1,4 +1,7 @@
 # Muxi / 沐曦 MC550 mx-exporter normalization.
+#
+# Verified exporter:
+#   cr.metax-tech.com/cloud/mx-exporter:0.14.2-amd64
 processors:
   filter/muxi:
     error_mode: ignore

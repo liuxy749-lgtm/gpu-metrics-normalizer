@@ -2,18 +2,18 @@
 
 > 端口说明：表中的端口是部署时常见的采集端口示例，不代表厂商 exporter 的固定默认端口。实际端口应以你的 exporter 启动参数和 OTel `targets` 配置为准。
 
-| 厂商 | 型号/系列 | exporter | 采集端口示例 | 配置片段 | 原始指标映射完整度 | 归一化输出 | 状态 |
-|---|---|---|---|---|---|---|---|
-| NVIDIA | H100/A800/H20/A100/V100/H800/B200/4090/3090 | dcgm-exporter | 可自定义，如 `9400`、`21001` | `configs/vendors/nvidia-dcgm.yaml` | 完整 | temperature, power, util, mem used/free/total/ratio, state | 已验证 |
-| 华为昇腾 | 910B/910C | npu-exporter | 可自定义，如 `8100`、`21001` | `configs/vendors/huawei-ascend.yaml` | 完整 | temperature, power, util, mem used/total/ratio, hbm temp/bandwidth, state, clocks | 已验证 |
-| 天数智芯 | BIV100/BIV150/MRV100/TGV200 | ix-exporter | 可自定义，如 `21001` | `configs/vendors/iluvatar-tianshu.yaml` | 完整 | temperature, power, util, mem total/used/ratio | 已验证 |
-| 摩尔线程 | S5000 | mtgpu-exporter | 可自定义，如 `21001` | `configs/vendors/mthreads-s5000.yaml` | 完整 | temperature, power, util, mem total/used/ratio | 已验证 |
-| 沐曦 | MC550 | mx-exporter | 可自定义，如 `8100`、`21001` | `configs/vendors/muxi-mc550.yaml` | 完整 | temperature, power, util, mem total/used/ratio | 已验证 |
-| 昆仑芯 | P800 | xpu-exporter | 可自定义，如 `9507`、`21001` | `configs/vendors/kunlunxin-p800.yaml` | 完整 | temperature, power, util, mem total/used/free/ratio, state, xid/ecc/link | 已验证 |
-| 海光 | BW1000/BW200/DCU | dcu-exporter | 可自定义，如 `9507`、`21001` | `configs/vendors/hygon-dcu.yaml` | 完整 | temperature, power, util, mem total/used/free/ratio | 已验证 |
-| 清微 | TX81/TX8110 | tx-exporter | 可自定义，如 `21001` | `configs/vendors/tsingmicro-tx.yaml` | 完整 | temperature, power, util, mem total/used/ratio, state | 已验证 |
-| 燧原 | S60 | gcu-exporter | 可自定义，如 `21001` | `configs/vendors/enflame-s60.yaml` | 完整 | temperature, power, util, mem total/used/ratio, state, clocks, ecc | 已验证 |
-| 寒武纪 | MLU590 | 待确认 | 待确认 | 暂无 | 待定 | 暂不提供 | 暂未配置 |
+| 厂商 | 型号/系列 | exporter | 已验证版本 / 镜像标签 | 采集端口示例 | 配置片段 | 原始指标映射完整度 | 归一化输出 | 状态 |
+|---|---|---|---|---|---|---|---|---|
+| NVIDIA | H100/A800/H20/A100/V100/H800/B200/4090/3090 | dcgm-exporter | `4.6.0` | 可自定义，如 `9400`、`21001` | `configs/vendors/nvidia-dcgm.yaml` | 完整 | temperature, power, util, mem used/free/total/ratio, state | 已验证 |
+| 华为昇腾 | 910B/910C | npu-exporter | `ascendai/npu-exporter:v7.3.1-arm64` | 可自定义，如 `8100`、`21001` | `configs/vendors/huawei-ascend.yaml` | 完整 | temperature, power, util, mem used/total/ratio, hbm temp/bandwidth, state, clocks | 已验证 |
+| 天数智芯 | BIV100/BIV150/MRV100/TGV200 | ix-exporter | 待补充 | 可自定义，如 `21001` | `configs/vendors/iluvatar-tianshu.yaml` | 完整 | temperature, power, util, mem total/used/ratio | 已验证 |
+| 摩尔线程 | S5000 | mtgpu-exporter | 待补充 | 可自定义，如 `21001` | `configs/vendors/mthreads-s5000.yaml` | 完整 | temperature, power, util, mem total/used/ratio | 已验证 |
+| 沐曦 | MC550 | mx-exporter | `cr.metax-tech.com/cloud/mx-exporter:0.14.2-amd64` | 可自定义，如 `8100`、`21001` | `configs/vendors/muxi-mc550.yaml` | 完整 | temperature, power, util, mem total/used/ratio | 已验证 |
+| 昆仑芯 | P800 | xpu-exporter | 待补充 | 可自定义，如 `9507`、`21001` | `configs/vendors/kunlunxin-p800.yaml` | 完整 | temperature, power, util, mem total/used/free/ratio, state, xid/ecc/link | 已验证 |
+| 海光 | BW1000/BW200/DCU | dcu-exporter | `dcu-exporter:v2.4.1` | 可自定义，如 `9507`、`21001` | `configs/vendors/hygon-dcu.yaml` | 完整 | temperature, power, util, mem total/used/free/ratio | 已验证 |
+| 清微 | TX81/TX8110 | tx-exporter | `v2.5.0` | 可自定义，如 `21001` | `configs/vendors/tsingmicro-tx.yaml` | 完整 | temperature, power, util, mem total/used/ratio, state | 已验证 |
+| 燧原 | S60 | gcu-exporter | `local/gcu-exporter:1.5.21` | 可自定义，如 `21001` | `configs/vendors/enflame-s60.yaml` | 完整 | temperature, power, util, mem total/used/ratio, state, clocks, ecc | 已验证 |
+| 寒武纪 | MLU590 | 待确认 | 待确认 | 待确认 | 暂无 | 待定 | 暂不提供 | 暂未配置 |
 
 ## 原始指标映射
 

@@ -79,6 +79,7 @@ gpu-metrics-normalizer/
 ├── scripts/
 │   └── validate-promql.sh
 └── docs/
+    ├── exporter-versions.md
     └── vendor-matrix.md
 ```
 
@@ -97,6 +98,8 @@ gpu-metrics-normalizer/
    - 海光：`dcu-exporter`
    - 清微：`tx-exporter`
    - 燧原：`s60/enflame exporter`
+
+   已验证过的 exporter 版本见 [docs/exporter-versions.md](docs/exporter-versions.md)。版本号代表本仓库验证过的指标输出格式；如果你使用其他版本，请先对比原始指标名、标签名和单位。
 
 2. 选择配置。
 

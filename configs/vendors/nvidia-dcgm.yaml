@@ -1,5 +1,8 @@
 # NVIDIA DCGM Exporter normalization.
 # Applies to H100, A800, H20, A100, V100, H800, B200, 4090, 3090.
+#
+# Verified exporter:
+#   dcgm-exporter 4.6.0
 processors:
   filter/nvidia:
     error_mode: ignore
