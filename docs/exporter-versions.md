@@ -13,8 +13,8 @@
 | 沐曦 | MC550 | mx-exporter | `cr.metax-tech.com/cloud/mx-exporter:0.14.2-amd64` | 基于 `core_temp`、`gpu_usage`、`memory_*` 等指标验证。 |
 | 昆仑芯 | P800 | xpu-exporter | 待补充 | 已验证 `node_xpu_*` 指标族。当前没有可公开确认的镜像 tag，建议部署方在使用时补充实际版本。 |
 | 海光 | BW1000、BW200/DCU | dcu-exporter | `dcu-exporter:v2.4.1` | 基于 `dcu_*` 指标族验证。实际镜像仓库名称可能随交付环境不同而变化。 |
-| 清微 | TX81、TX8110 | tx-exporter | `v2.5.0` | 基于 TX8100/TX8110 系列 `TSINGMICRO_KUIPER_*` 指标验证。 |
-| 燧原 | S60 | gcu-exporter | `local/gcu-exporter:1.5.21` | 基于 `enflame_gcu_*` 指标族验证。 |
+| 清微 | TX81 | tx-exporter | `v2.5.0` | 基于 TX81 系列 `TSINGMICRO_KUIPER_*` 指标验证。 |
+| 燧原 | S60 | gcu-exporter | `gcu-exporter:1.5.21` | 基于 `enflame_gcu_*` 指标族验证。 |
 | 寒武纪 | MLU590 | 待确认 | 待确认 | 当前没有可确认的 exporter 指标样例，本仓库暂不提供寒武纪配置。 |
 
 ## OpenTelemetry Collector
