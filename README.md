@@ -1,8 +1,8 @@
-# GPU OTel Normalization Templates
+# GPU Metrics Normalizer
 
-这套配置用于把不同厂商 GPU/NPU/加速卡 exporter 的 Prometheus 指标，通过 OpenTelemetry Collector 归一化为一组统一指标，便于中心 Prometheus、Grafana、资源治理平台和告警系统统一消费。
+这套配置用于把不同厂商 GPU/NPU/加速卡 exporter 暴露的 Prometheus 指标，通过 OpenTelemetry Collector 归一化为一组稳定的 `gpu_*` 指标，方便后续接入 Prometheus 兼容存储、告警系统和 Grafana 看板。
 
-当前现场已验证归一化输出覆盖：
+已整理的归一化配置覆盖：
 
 - NVIDIA：H100、A800、H20、A100、V100、H800、B200、4090、3090
 - 华为昇腾：910B、910C
@@ -15,6 +15,7 @@
 - 燧原：S60
 
 寒武纪 MLU590 暂未纳入配置。
+
 ## 部署拓扑
 
 ```mermaid
@@ -25,7 +26,7 @@ flowchart LR
     D --> E["Grafana<br/>看板展示"]
 ```
 
-典型链路是每台 GPU 节点运行对应厂商 exporter，OTel Collector 负责采集 exporter 指标并归一化为统一 `gpu_*` 指标，再上报到 VictoriaMetrics/vmstorage，最终由 Prometheus 和 Grafana 统一查询、告警和展示。
+典型链路是每台 GPU 节点运行对应厂商 exporter，OpenTelemetry Collector 负责采集 exporter 指标并完成过滤、重命名、单位换算和标签标准化，再上报到 VictoriaMetrics/vmstorage，最终由 Prometheus 和 Grafana 统一查询、告警和展示。
 
 ## 统一输出指标
 
@@ -46,19 +47,19 @@ flowchart LR
 
 | 标签 | 说明 |
 |---|---|
-| `ip` | 机器 IP，建议作为跨系统主键 |
+| `ip` | 机器 IP，建议作为设备维度的稳定主键 |
 | `hostname` | 主机名 |
 | `dev_id` | 卡编号 |
 | `gpu_vendor` | 厂商，如 `nvidia`、`huawei`、`kunlunxin` |
 | `gpu_type` | 卡型号 |
-| `region` | 地域/资源池 |
-| `zone` | 可用区/机房 |
-| `site` | 站点标识 |
+| `region` | 地域或资源池，可选 |
+| `zone` | 可用区或机房，可选 |
+| `site` | 站点标识，可选 |
 
 ## 目录结构
 
 ```text
-gpu-otel-normalization/
+gpu-metrics-normalizer/
 ├── README.md
 ├── configs/
 │   ├── all-vendors-template.yaml
@@ -97,7 +98,14 @@ gpu-otel-normalization/
    - 清微：`tx-exporter`
    - 燧原：`s60/enflame exporter`
 
-2. 修改 OTel 配置里的 targets。
+2. 选择配置。
+
+   - `configs/all-vendors-template.yaml` 是完整 Collector 配置模板，适合从零搭建或快速验证。
+   - `configs/vendors/*.yaml` 是按厂商拆分的 processor 片段，适合合并到已有 Collector 配置中。
+
+3. 修改 OTel 配置里的 targets。
+
+   `all-vendors-template.yaml` 里 NVIDIA 示例使用 `9400`，其他厂商示例使用 `21001`，这是为了和模板里的 `ip` 标签提取规则保持一致。如果你的 exporter 使用其他端口，需要同步调整对应的 `transform/extract_ip_*` 处理器。
 
    ```yaml
    static_configs:
@@ -109,20 +117,20 @@ gpu-otel-normalization/
          zone: example-zone
    ```
 
-3. 设置中心 Prometheus OTLP 地址。
+4. 设置 Prometheus 兼容后端的 OTLP 地址。
 
    ```bash
    cp examples/otel.env.example .env
    vim .env
    ```
 
-4. 启动 OTel Collector。
+5. 启动 OTel Collector。
 
    ```bash
    docker compose -f examples/docker-compose.yaml --env-file .env up -d
    ```
 
-5. 检查标准指标。
+6. 检查标准指标。
 
    ```promql
    count by(gpu_vendor,gpu_type)(gpu_utilization_ratio)
@@ -131,9 +139,9 @@ gpu-otel-normalization/
    count by(gpu_vendor,gpu_type)(gpu_temperature)
    ```
 
-## 现场经验
+## 设计约定
 
-1. 归一化层只负责输出稳定的 `gpu_*` 指标名和基础标签，不负责资产归属、团队归属或项目归属。
+1. 归一化层只负责输出稳定的 `gpu_*` 指标名和基础标签，不绑定资产系统、团队系统或项目系统。
 2. `ip`、`hostname`、`dev_id`、`gpu_vendor`、`gpu_type` 是建议保留的最小定位标签。
 3. 如果 exporter 只提供 used/free，不提供 total，用 OTel `metricsgeneration` 生成：
 
@@ -155,3 +163,9 @@ gpu-otel-normalization/
    power: watts
    temperature: celsius
    ```
+
+## 不在本仓库范围内
+
+- 各厂商 exporter 的安装包、镜像分发和启动参数维护。
+- 面向具体机房、专线、运维通道或资产平台的部署信息。
+- 告警阈值、Grafana 看板和资产归属模型；这些通常需要结合实际业务口径单独维护。

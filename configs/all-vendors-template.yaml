@@ -47,7 +47,7 @@ receivers:
           scrape_interval: 30s
           scrape_timeout: 15s
           static_configs:
-            - targets: ["REPLACE_WITH_MUXI_HOST:8100"]
+            - targets: ["REPLACE_WITH_MUXI_HOST:21001"]
               labels: {region: "example-region", zone: "example-zone"}
 
   prometheus/tsingmicro:
@@ -67,7 +67,7 @@ receivers:
           scrape_interval: 30s
           scrape_timeout: 15s
           static_configs:
-            - targets: ["REPLACE_WITH_ASCEND_HOST:8100"]
+            - targets: ["REPLACE_WITH_ASCEND_HOST:21001"]
               labels: {region: "example-region", zone: "example-zone"}
 
   prometheus/kunlunxin:
@@ -221,32 +221,96 @@ processors:
       - {include: TSINGMICRO_KUIPER_MEMORY_TOTAL, match_type: strict, action: update, new_name: gpu_memory_total_bytes}
       - {include: TSINGMICRO_KUIPER_HEALTH_STATUS, match_type: strict, action: update, new_name: gpu_state}
 
-  # The following processors are templates for vendors whose normalized output
-  # was verified in the field, but raw exporter samples should be added before
-  # publishing strict production mappings.
-  metricstransform/huawei_template:
+  filter/huawei:
+    error_mode: ignore
+    metrics:
+      metric:
+        - >-
+          not IsMatch(name, "^npu_chip_info_temperature$|^npu_chip_info_power$|^npu_chip_info_health_status$|^npu_chip_info_ai_core_utilization$|^npu_chip_info_hbm_total_memory$|^npu_chip_info_hbm_used_memory$|^npu_chip_info_hbm_utilization$|^npu_chip_info_hbm_temperature$|^npu_chip_info_aicore_current_freq$|^npu_chip_info_bandwidth_rx$|^npu_chip_info_bandwidth_tx$|^npu_chip_info_hbm_bandwidth_utilization$|^machine_npu_nums$")
+          and IsMatch(name, "^npu_|^machine_npu_nums$")
+  metricstransform/huawei_labels:
     transforms:
-      - include: ^(npu|ascend|huawei).*
+      - include: ^(npu_|machine_npu_nums).*
         match_type: regexp
         action: update
         operations:
+          - {action: update_label, label: id, new_label: dev_id}
+          - {action: update_label, label: model_name, new_label: gpu_type}
           - {action: add_label, new_label: gpu_vendor, new_value: huawei}
-
-  metricstransform/kunlunxin_template:
+  metricstransform/huawei_metrics:
     transforms:
-      - include: ^(xpu|kunlun|klx).*
+      - {include: npu_chip_info_temperature, match_type: strict, action: update, new_name: gpu_temperature}
+      - {include: npu_chip_info_power, match_type: strict, action: update, new_name: gpu_power_usage_watts}
+      - {include: npu_chip_info_ai_core_utilization, match_type: strict, action: update, new_name: gpu_utilization_ratio}
+      - {include: npu_chip_info_hbm_total_memory, match_type: strict, action: update, new_name: gpu_memory_total_bytes}
+      - {include: npu_chip_info_hbm_used_memory, match_type: strict, action: update, new_name: gpu_memory_used_bytes}
+      - {include: npu_chip_info_hbm_utilization, match_type: strict, action: update, new_name: gpu_memory_usage_ratio}
+      - {include: npu_chip_info_hbm_temperature, match_type: strict, action: update, new_name: gpu_hbm_temperature}
+      - {include: npu_chip_info_health_status, match_type: strict, action: update, new_name: gpu_state}
+      - {include: npu_chip_info_aicore_current_freq, match_type: strict, action: update, new_name: gpu_clock_mhz}
+      - {include: npu_chip_info_bandwidth_rx, match_type: strict, action: update, new_name: gpu_pcie_rx_bytes}
+      - {include: npu_chip_info_bandwidth_tx, match_type: strict, action: update, new_name: gpu_pcie_tx_bytes}
+      - {include: npu_chip_info_hbm_bandwidth_utilization, match_type: strict, action: update, new_name: gpu_hbm_bandwidth_ratio}
+
+  filter/kunlunxin:
+    error_mode: ignore
+    metrics:
+      metric:
+        - not IsMatch(name, "^node_xpu_temp$|^node_xpu_powerUsage$|^node_xpu_utilization$|^node_xpu_memtotal$|^node_xpu_memused$|^node_xpu_memfree$|^node_xpu_memutil$|^node_xpu_state$|^node_xpu_xidCount$|^node_xpu_totalEccCorrectedErrors$|^node_xpu_totalEccUncorrectedErrors$|^node_xpu_xpuLinkState$")
+  metricstransform/kunlunxin:
+    transforms:
+      - include: ^node_xpu_.*
         match_type: regexp
         action: update
         operations:
+          - {action: update_label, label: card, new_label: dev_id}
+          - {action: update_label, label: device, new_label: dev_id}
+          - {action: update_label, label: name, new_label: gpu_type}
           - {action: add_label, new_label: gpu_vendor, new_value: kunlunxin}
+      - {include: node_xpu_temp, match_type: strict, action: update, new_name: gpu_temperature}
+      - {include: node_xpu_powerUsage, match_type: strict, action: update, new_name: gpu_power_usage_watts}
+      - {include: node_xpu_utilization, match_type: strict, action: update, new_name: gpu_utilization_ratio}
+      - {include: node_xpu_memtotal, match_type: strict, action: update, new_name: gpu_memory_total_bytes}
+      - {include: node_xpu_memused, match_type: strict, action: update, new_name: gpu_memory_used_bytes}
+      - {include: node_xpu_memfree, match_type: strict, action: update, new_name: gpu_memory_free_bytes}
+      - {include: node_xpu_memutil, match_type: strict, action: update, new_name: gpu_memory_usage_ratio}
+      - {include: node_xpu_state, match_type: strict, action: update, new_name: gpu_state}
+      - {include: node_xpu_xidCount, match_type: strict, action: update, new_name: gpu_xid_errors_total}
+      - {include: node_xpu_totalEccCorrectedErrors, match_type: strict, action: update, new_name: gpu_ecc_corrected_errors_total}
+      - {include: node_xpu_totalEccUncorrectedErrors, match_type: strict, action: update, new_name: gpu_ecc_uncorrected_errors_total}
+      - {include: node_xpu_xpuLinkState, match_type: strict, action: update, new_name: gpu_link_state}
 
-  metricstransform/enflame_template:
+  filter/enflame:
+    error_mode: ignore
+    metrics:
+      metric:
+        - not IsMatch(name, "^enflame_gcu_temperatures$|^enflame_gcu_power_consumption$|^enflame_gcu_usage$|^enflame_gcu_memory_total_bytes$|^enflame_gcu_memory_used_bytes$|^enflame_gcu_memory_usage$|^enflame_gcu_health$|^enflame_gcu_clock$|^enflame_gcu_cluster_usage$|^enflame_gcu_sip_usage$|^enflame_gcu_power_capability$|^enflame_gcu_power_usage$|^enflame_gcu_ecc_single_bit_error_total_count$|^enflame_gcu_ecc_double_bit_error_total_count$|^enflame_gcu_exporter_up$|^enflame_gcu_count$")
+  metricstransform/enflame:
     transforms:
-      - include: ^(s60|enflame).*
+      - include: ^enflame_gcu_.*
         match_type: regexp
         action: update
         operations:
+          - {action: update_label, label: minor_number, new_label: dev_id}
+          - {action: update_label, label: name, new_label: gpu_type}
+          - {action: update_label, label: host, new_label: hostname}
           - {action: add_label, new_label: gpu_vendor, new_value: enflame}
+      - {include: enflame_gcu_temperatures, match_type: strict, action: update, new_name: gpu_temperature}
+      - {include: enflame_gcu_power_consumption, match_type: strict, action: update, new_name: gpu_power_usage_watts}
+      - {include: enflame_gcu_usage, match_type: strict, action: update, new_name: gpu_utilization_ratio}
+      - {include: enflame_gcu_memory_total_bytes, match_type: strict, action: update, new_name: gpu_memory_total_bytes}
+      - {include: enflame_gcu_memory_used_bytes, match_type: strict, action: update, new_name: gpu_memory_used_bytes}
+      - {include: enflame_gcu_memory_usage, match_type: strict, action: update, new_name: gpu_memory_usage_ratio}
+      - {include: enflame_gcu_health, match_type: strict, action: update, new_name: gpu_state}
+      - {include: enflame_gcu_clock, match_type: strict, action: update, new_name: gpu_clock_mhz}
+      - {include: enflame_gcu_cluster_usage, match_type: strict, action: update, new_name: gpu_cluster_usage_ratio}
+      - {include: enflame_gcu_sip_usage, match_type: strict, action: update, new_name: gpu_sip_usage_ratio}
+      - {include: enflame_gcu_power_capability, match_type: strict, action: update, new_name: gpu_power_capability_watts}
+      - {include: enflame_gcu_power_usage, match_type: strict, action: update, new_name: gpu_power_usage_ratio}
+      - {include: enflame_gcu_ecc_single_bit_error_total_count, match_type: strict, action: update, new_name: gpu_ecc_corrected_errors_total}
+      - {include: enflame_gcu_ecc_double_bit_error_total_count, match_type: strict, action: update, new_name: gpu_ecc_uncorrected_errors_total}
+      - {include: enflame_gcu_exporter_up, match_type: strict, action: update, new_name: gpu_exporter_up}
+      - {include: enflame_gcu_count, match_type: strict, action: update, new_name: machine_gpu_count}
 
   transform/extract_ip_21001:
     error_mode: ignore
@@ -269,15 +333,23 @@ processors:
         statements:
           - set(value_double, value_double / 100.0) where metric.name == "gpu_utilization_ratio" and value_double > 1.0
           - set(value_double, value_double / 100.0) where metric.name == "gpu_memory_usage_ratio" and value_double > 1.0
+          - set(value_double, value_double / 100.0) where metric.name == "gpu_power_usage_ratio" and value_double > 1.0
+          - set(value_double, value_double / 100.0) where metric.name == "gpu_cluster_usage_ratio" and value_double > 1.0
+          - set(value_double, value_double / 100.0) where metric.name == "gpu_sip_usage_ratio" and value_double > 1.0
+          - set(value_double, value_double / 100.0) where metric.name == "gpu_hbm_bandwidth_ratio" and value_double > 1.0
           - set(value_double, value_double / 1000.0) where metric.name == "gpu_power_usage_watts" and (attributes["gpu_vendor"] == "mthreads" or attributes["gpu_vendor"] == "muxi")
           - set(value_double, value_double * 1048576.0) where (metric.name == "gpu_memory_total_bytes" or metric.name == "gpu_memory_used_bytes" or metric.name == "gpu_memory_free_bytes") and (attributes["gpu_vendor"] == "nvidia" or attributes["gpu_vendor"] == "iluvatar")
           - set(value_double, value_double * 1024.0) where (metric.name == "gpu_memory_total_bytes" or metric.name == "gpu_memory_used_bytes") and attributes["gpu_vendor"] == "muxi"
           - delete_key(attributes, "container")
+          - delete_key(attributes, "container_name")
           - delete_key(attributes, "node")
           - delete_key(attributes, "pod")
+          - delete_key(attributes, "pod_name")
           - delete_key(attributes, "namespace")
+          - delete_key(attributes, "pod_namespace")
           - delete_key(attributes, "wayId")
           - delete_key(attributes, "memType")
+          - delete_key(attributes, "slot")
 
   metricsgeneration/memory_total:
     rules:
@@ -347,4 +419,16 @@ service:
     metrics/tsingmicro:
       receivers: [prometheus/tsingmicro]
       processors: [filter/tsingmicro, metricstransform/tsingmicro, transform/extract_ip_21001, transform/common_units, metricsgeneration/memory_usage_ratio, batch]
+      exporters: [otlphttp/prometheus]
+    metrics/huawei:
+      receivers: [prometheus/huawei]
+      processors: [filter/huawei, metricstransform/huawei_labels, metricstransform/huawei_metrics, transform/extract_ip_21001, transform/common_units, batch]
+      exporters: [otlphttp/prometheus]
+    metrics/kunlunxin:
+      receivers: [prometheus/kunlunxin]
+      processors: [filter/kunlunxin, metricstransform/kunlunxin, transform/extract_ip_21001, transform/common_units, batch]
+      exporters: [otlphttp/prometheus]
+    metrics/enflame:
+      receivers: [prometheus/enflame]
+      processors: [filter/enflame, metricstransform/enflame, transform/extract_ip_21001, transform/common_units, batch]
       exporters: [otlphttp/prometheus]
