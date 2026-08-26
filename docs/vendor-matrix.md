@@ -12,7 +12,7 @@
 | 昆仑芯 | P800 | xpu-exporter | 可自定义，如 `9507`、`21001` | `configs/vendors/kunlunxin-p800.yaml` | 完整 | temperature, power, util, mem total/used/free/ratio, state, xid/ecc/link | 已验证 |
 | 海光 | BW1000/BW200/DCU | dcu-exporter | 可自定义，如 `9507`、`21001` | `configs/vendors/hygon-dcu.yaml` | 完整 | temperature, power, util, mem total/used/free/ratio | 已验证 |
 | 清微 | TX81/TX8110 | tx-exporter | 可自定义，如 `21001` | `configs/vendors/tsingmicro-tx.yaml` | 完整 | temperature, power, util, mem total/used/ratio, state | 已验证 |
-| 燧原 | S60 | enflame/s60 exporter / GCU normalizer | 可自定义，如 `21001` | `configs/vendors/enflame-s60.yaml` | 已验证预归一化输出 | temperature, power, util, mem total/used/free/ratio, clocks | 已验证 |
+| 燧原 | S60 | gcu-exporter | 可自定义，如 `21001` | `configs/vendors/enflame-s60.yaml` | 完整 | temperature, power, util, mem total/used/ratio, state, clocks, ecc | 已验证 |
 | 寒武纪 | MLU590 | 待确认 | 待确认 | 暂无 | 待定 | 暂不提供 | 暂未配置 |
 
 ## 原始指标映射
@@ -125,22 +125,48 @@ node_xpu_xpuDevicesNum
 
 ### 燧原 / Enflame S60
 
-已验证的 S60 接入方式使用预归一化 GCU exporter / normalizer 输出：输入 OTel 前已经是 `gpu_*` 风格指标，OTel 只补充通用标签。因此这里展示的是 OTel 输入端可见的原始指标名。
+已验证的 S60 原始 exporter 为 `local/gcu-exporter:1.5.21`，监听端口可通过启动参数自定义。样例中 exporter 使用 `--web.listen-address=:21001`，原始指标前缀为 `enflame_gcu_*`。
 
 | 原始指标 | 归一化指标 | 说明 |
 |---|---|---|
-| `gpu_temperature` | `gpu_temperature` | 卡温度，透传 |
-| `gpu_power_usage_watts` | `gpu_power_usage_watts` | 当前功耗，透传 |
-| `gpu_utilization_ratio` | `gpu_utilization_ratio` | GCU 利用率，配置中统一到 0-1 |
-| `gpu_memory_total_bytes` | `gpu_memory_total_bytes` | 显存总量，透传 |
-| `gpu_memory_used_bytes` | `gpu_memory_used_bytes` | 显存已用，透传 |
-| `gpu_memory_free_bytes` | `gpu_memory_free_bytes` | 显存空闲，透传 |
-| `gpu_memory_usage_ratio` | `gpu_memory_usage_ratio` | 显存使用率，配置中统一到 0-1 |
-| `gpu_clock_mhz` | `gpu_clock_mhz` | 核心频率，扩展指标 |
-| `gpu_mem_clock_mhz` | `gpu_mem_clock_mhz` | 显存频率，扩展指标 |
-| `gcu_normalizer_target_up` | `gcu_normalizer_target_up` | normalizer 采集目标健康状态 |
+| `enflame_gcu_temperatures` | `gpu_temperature` | GCU 温度 |
+| `enflame_gcu_power_consumption` | `gpu_power_usage_watts` | 当前功耗，单位 watts |
+| `enflame_gcu_usage` | `gpu_utilization_ratio` | GCU 利用率，配置中统一到 0-1 |
+| `enflame_gcu_memory_total_bytes` | `gpu_memory_total_bytes` | 显存总量 |
+| `enflame_gcu_memory_used_bytes` | `gpu_memory_used_bytes` | 显存已用 |
+| `enflame_gcu_memory_usage` | `gpu_memory_usage_ratio` | 显存使用率，配置中统一到 0-1 |
+| `enflame_gcu_health` | `gpu_state` | 健康状态；样例中 `healthmsg="Healthy"` 时值为 `2` |
+| `enflame_gcu_clock` | `gpu_clock_mhz` | GCU 核心频率 |
+| `enflame_gcu_cluster_usage` | `gpu_cluster_usage_ratio` | Cluster 利用率，配置中统一到 0-1 |
+| `enflame_gcu_sip_usage` | `gpu_sip_usage_ratio` | SIP 利用率，配置中统一到 0-1 |
+| `enflame_gcu_power_capability` | `gpu_power_capability_watts` | 功耗能力/功耗上限 |
+| `enflame_gcu_power_usage` | `gpu_power_usage_ratio` | 功耗占比，配置中统一到 0-1；不要当作 watts 使用 |
+| `enflame_gcu_ecc_single_bit_error_total_count` | `gpu_ecc_corrected_errors_total` | ECC 单比特错误累计计数 |
+| `enflame_gcu_ecc_double_bit_error_total_count` | `gpu_ecc_uncorrected_errors_total` | ECC 双比特错误累计计数 |
+| `enflame_gcu_exporter_up` | `gpu_exporter_up` | exporter 采集状态 |
+| `enflame_gcu_count` | `machine_gpu_count` | 机器 GCU 数量 |
 
-如果使用的是直接暴露厂商私有 metric 名的 native Enflame exporter，需要补充该 exporter 的 `/metrics` 样例后，再增加“私有 metric 名 → `gpu_*`”的严格重命名规则。
+样例中确认的关键标签：
+
+```text
+minor_number -> dev_id
+name         -> gpu_type
+host         -> hostname
+uuid         -> device UUID
+busid        -> PCI bus path
+```
+
+当前样例中还可见以下燧原原始指标，可按需扩展：
+
+```text
+enflame_gcu_info
+enflame_gcu_pcie_link_width
+enflame_gcu_pcie_max_link_width
+enflame_gcu_scrape_collector_duration_seconds
+enflame_gcu_scrape_collector_success
+enflame_gcu_virt_mode
+gcu_exporter_build_info
+```
 
 ### 华为昇腾 / Huawei Ascend 910B/910C
 

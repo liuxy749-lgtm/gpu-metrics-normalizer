@@ -1,35 +1,52 @@
-# Enflame / 燧原 S60 normalization.
+# Enflame / 燧原 S60 gcu-exporter normalization.
 #
-# The verified S60 input used here is a pre-normalized GCU exporter /
-# normalizer output. It already exposes gpu_* metric names, plus optional
-# clock and target health metrics:
-#   gpu_temperature
-#   gpu_power_usage_watts
-#   gpu_utilization_ratio
-#   gpu_memory_total_bytes
-#   gpu_memory_used_bytes
-#   gpu_memory_free_bytes
-#   gpu_memory_usage_ratio
-#   gpu_clock_mhz
-#   gpu_mem_clock_mhz
-#   gcu_normalizer_target_up
+# Verified exporter:
+#   local/gcu-exporter:1.5.21
 #
-# If you use a native Enflame exporter that exposes vendor-specific names
-# instead of gpu_* names, add strict rename rules before this processor.
+# Verified raw metric family:
+#   enflame_gcu_*
+#
+# Typical normalized labels:
+#   gpu_vendor: enflame
+#   gpu_type: Enflame ZIXIAOC200
+#
+# Label mapping from the verified exporter:
+#   minor_number -> dev_id
+#   name         -> gpu_type
+#   host         -> hostname
 processors:
   filter/enflame:
     error_mode: ignore
     metrics:
       metric:
-        - not IsMatch(name, "^gpu_temperature$|^gpu_power_usage_watts$|^gpu_utilization_ratio$|^gpu_memory_total_bytes$|^gpu_memory_used_bytes$|^gpu_memory_free_bytes$|^gpu_memory_usage_ratio$|^gpu_clock_mhz$|^gpu_mem_clock_mhz$|^gcu_normalizer_target_up$")
+        - not IsMatch(name, "^enflame_gcu_temperatures$|^enflame_gcu_power_consumption$|^enflame_gcu_usage$|^enflame_gcu_memory_total_bytes$|^enflame_gcu_memory_used_bytes$|^enflame_gcu_memory_usage$|^enflame_gcu_health$|^enflame_gcu_clock$|^enflame_gcu_cluster_usage$|^enflame_gcu_sip_usage$|^enflame_gcu_power_capability$|^enflame_gcu_power_usage$|^enflame_gcu_ecc_single_bit_error_total_count$|^enflame_gcu_ecc_double_bit_error_total_count$|^enflame_gcu_exporter_up$|^enflame_gcu_count$")
 
   metricstransform/enflame:
     transforms:
-      - include: ^(gpu_|gcu_normalizer_).*
+      - include: ^enflame_gcu_.*
         match_type: regexp
         action: update
         operations:
+          - {action: update_label, label: minor_number, new_label: dev_id}
+          - {action: update_label, label: name, new_label: gpu_type}
+          - {action: update_label, label: host, new_label: hostname}
           - {action: add_label, new_label: gpu_vendor, new_value: enflame}
+      - {include: enflame_gcu_temperatures, match_type: strict, action: update, new_name: gpu_temperature}
+      - {include: enflame_gcu_power_consumption, match_type: strict, action: update, new_name: gpu_power_usage_watts}
+      - {include: enflame_gcu_usage, match_type: strict, action: update, new_name: gpu_utilization_ratio}
+      - {include: enflame_gcu_memory_total_bytes, match_type: strict, action: update, new_name: gpu_memory_total_bytes}
+      - {include: enflame_gcu_memory_used_bytes, match_type: strict, action: update, new_name: gpu_memory_used_bytes}
+      - {include: enflame_gcu_memory_usage, match_type: strict, action: update, new_name: gpu_memory_usage_ratio}
+      - {include: enflame_gcu_health, match_type: strict, action: update, new_name: gpu_state}
+      - {include: enflame_gcu_clock, match_type: strict, action: update, new_name: gpu_clock_mhz}
+      - {include: enflame_gcu_cluster_usage, match_type: strict, action: update, new_name: gpu_cluster_usage_ratio}
+      - {include: enflame_gcu_sip_usage, match_type: strict, action: update, new_name: gpu_sip_usage_ratio}
+      - {include: enflame_gcu_power_capability, match_type: strict, action: update, new_name: gpu_power_capability_watts}
+      - {include: enflame_gcu_power_usage, match_type: strict, action: update, new_name: gpu_power_usage_ratio}
+      - {include: enflame_gcu_ecc_single_bit_error_total_count, match_type: strict, action: update, new_name: gpu_ecc_corrected_errors_total}
+      - {include: enflame_gcu_ecc_double_bit_error_total_count, match_type: strict, action: update, new_name: gpu_ecc_uncorrected_errors_total}
+      - {include: enflame_gcu_exporter_up, match_type: strict, action: update, new_name: gpu_exporter_up}
+      - {include: enflame_gcu_count, match_type: strict, action: update, new_name: machine_gpu_count}
 
   transform/enflame_units:
     error_mode: ignore
@@ -38,3 +55,10 @@ processors:
         statements:
           - set(value_double, value_double / 100.0) where metric.name == "gpu_utilization_ratio" and value_double > 1.0
           - set(value_double, value_double / 100.0) where metric.name == "gpu_memory_usage_ratio" and value_double > 1.0
+          - set(value_double, value_double / 100.0) where metric.name == "gpu_power_usage_ratio" and value_double > 1.0
+          - set(value_double, value_double / 100.0) where metric.name == "gpu_cluster_usage_ratio" and value_double > 1.0
+          - set(value_double, value_double / 100.0) where metric.name == "gpu_sip_usage_ratio" and value_double > 1.0
+          - delete_key(attributes, "container_name")
+          - delete_key(attributes, "pod_name")
+          - delete_key(attributes, "pod_namespace")
+          - delete_key(attributes, "slot")
