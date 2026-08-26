@@ -13,7 +13,20 @@
 - 海光：BW1000、BW200/DCU
 - 清微：TX81、TX8110
 - 燧原：S60
-- 寒武纪：MLU590（待补充）
+
+寒武纪 MLU590 暂未纳入配置。当前仓库没有可确认的寒武纪 exporter 原始指标样例，因此先不发布寒武纪 OTel 映射，避免误导使用者。
+
+## 部署拓扑
+
+```mermaid
+flowchart LR
+    A["GPU 节点<br/>Vendor Exporter"] --> B["OpenTelemetry Collector<br/>指标过滤 / 重命名 / 单位换算 / 标签标准化"]
+    B --> C["VictoriaMetrics / vmstorage<br/>远端写入或 OTLP/Prometheus 接入"]
+    C --> D["Prometheus<br/>查询 / 规则 / 告警"]
+    D --> E["Grafana<br/>看板展示"]
+```
+
+典型链路是每台 GPU 节点运行对应厂商 exporter，OTel Collector 负责采集 exporter 指标并归一化为统一 `gpu_*` 指标，再上报到 VictoriaMetrics/vmstorage，最终由 Prometheus 和 Grafana 统一查询、告警和展示。
 
 ## 统一输出指标
 
