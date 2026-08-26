@@ -7,14 +7,14 @@
 | 厂商 | 型号/系列 | exporter | 已验证版本 / 镜像标签 | 备注 |
 |---|---|---|---|---|
 | NVIDIA | H100、A800、H20、A100、V100、H800、B200、4090、3090 | dcgm-exporter | `4.6.0` | 基于 DCGM exporter 指标族 `DCGM_FI_DEV_*`。部分环境使用自定义构建补充 `gpu_memory_total_bytes`，OTel 配置也支持通过 used/free 生成 total。 |
-| 华为昇腾 | 910B、910C | npu-exporter | `ascendai/npu-exporter:v7.3.1-arm64` | 基于 `npu_chip_info_*` 指标族验证。 |
+| 华为昇腾 | 910B、910C | npu-exporter | v7.3.1-arm64 | 基于 `npu_chip_info_*` 指标族验证。 |
 | 天数智芯 | BIV100、BIV150、MRV100、TGV200 | ix-exporter | 待补充 | 已验证 `ix_*` 指标族。当前没有可公开确认的镜像 tag，建议部署方在使用时补充实际版本。 |
 | 摩尔线程 | S5000 | mtgpu-exporter | 待补充 | 已验证 `mtgpu_*` 指标族。当前没有可公开确认的镜像 tag，建议部署方在使用时补充实际版本。 |
-| 沐曦 | MC550 | mx-exporter | `cr.metax-tech.com/cloud/mx-exporter:0.14.2-amd64` | 基于 `core_temp`、`gpu_usage`、`memory_*` 等指标验证。 |
+| 沐曦 | MC550 | mx-exporter | 0.14.2-amd64 | 基于 `core_temp`、`gpu_usage`、`memory_*` 等指标验证。 |
 | 昆仑芯 | P800 | xpu-exporter | 待补充 | 已验证 `node_xpu_*` 指标族。当前没有可公开确认的镜像 tag，建议部署方在使用时补充实际版本。 |
-| 海光 | BW1000、BW200/DCU | dcu-exporter | `dcu-exporter:v2.4.1` | 基于 `dcu_*` 指标族验证。实际镜像仓库名称可能随交付环境不同而变化。 |
+| 海光 | BW1000、BW200/DCU | dcu-exporter | v2.4.1 | 基于 `dcu_*` 指标族验证。实际镜像仓库名称可能随交付环境不同而变化。 |
 | 清微 | TX81 | tx-exporter | `v2.5.0` | 基于 TX81 系列 `TSINGMICRO_KUIPER_*` 指标验证。 |
-| 燧原 | S60 | gcu-exporter | `gcu-exporter:1.5.21` | 基于 `enflame_gcu_*` 指标族验证。 |
+| 燧原 | S60 | gcu-exporter | 1.5.21 | 基于 `enflame_gcu_*` 指标族验证。 |
 | 寒武纪 | MLU590 | 待确认 | 待确认 | 当前没有可确认的 exporter 指标样例，本仓库暂不提供寒武纪配置。 |
 
 ## OpenTelemetry Collector
