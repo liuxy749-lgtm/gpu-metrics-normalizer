@@ -1,23 +1,53 @@
-# Huawei Ascend / 华为昇腾 910B/910C template.
+# Huawei Ascend / 华为昇腾 910B/910C npu-exporter normalization.
 #
-# Field deployment has verified normalized output:
-#   gpu_vendor in {"Huawei", "huawei"}
-#   gpu_type examples: bm-ascend-910b-64g, Ascend910-Ascend-V1
+# Verified raw metric family:
+#   npu_chip_info_*
 #
-# TODO before open-source GA:
-#   Add raw npu-exporter sample output and strict metric rename rules.
+# Typical normalized labels:
+#   gpu_vendor: huawei
+#   gpu_type: Ascend 910B / 910C model name from exporter label
+#
+# Label names may vary across npu-exporter versions. Keep dev_id/gpu_type
+# relabel operations aligned with labels exposed by your exporter.
 processors:
-  metricstransform/huawei_template:
+  filter/huawei:
+    error_mode: ignore
+    metrics:
+      metric:
+        - >-
+          not IsMatch(name, "^npu_chip_info_temperature$|^npu_chip_info_power$|^npu_chip_info_health_status$|^npu_chip_info_ai_core_utilization$|^npu_chip_info_hbm_total_memory$|^npu_chip_info_hbm_used_memory$|^npu_chip_info_hbm_utilization$|^npu_chip_info_hbm_temperature$|^npu_chip_info_aicore_current_freq$|^npu_chip_info_bandwidth_rx$|^npu_chip_info_bandwidth_tx$|^npu_chip_info_hbm_bandwidth_utilization$|^machine_npu_nums$")
+          and IsMatch(name, "^npu_|^machine_npu_nums$")
+
+  metricstransform/huawei_labels:
     transforms:
-      - include: ^(npu|ascend|huawei).*
+      - include: ^(npu_|machine_npu_nums).*
         match_type: regexp
         action: update
         operations:
+          - {action: update_label, label: id, new_label: dev_id}
+          - {action: update_label, label: model_name, new_label: gpu_type}
           - {action: add_label, new_label: gpu_vendor, new_value: huawei}
-  transform/huawei_units_template:
+
+  metricstransform/huawei_metrics:
+    transforms:
+      - {include: npu_chip_info_temperature, match_type: strict, action: update, new_name: gpu_temperature}
+      - {include: npu_chip_info_power, match_type: strict, action: update, new_name: gpu_power_usage_watts}
+      - {include: npu_chip_info_ai_core_utilization, match_type: strict, action: update, new_name: gpu_utilization_ratio}
+      - {include: npu_chip_info_hbm_total_memory, match_type: strict, action: update, new_name: gpu_memory_total_bytes}
+      - {include: npu_chip_info_hbm_used_memory, match_type: strict, action: update, new_name: gpu_memory_used_bytes}
+      - {include: npu_chip_info_hbm_utilization, match_type: strict, action: update, new_name: gpu_memory_usage_ratio}
+      - {include: npu_chip_info_hbm_temperature, match_type: strict, action: update, new_name: gpu_hbm_temperature}
+      - {include: npu_chip_info_health_status, match_type: strict, action: update, new_name: gpu_state}
+      - {include: npu_chip_info_aicore_current_freq, match_type: strict, action: update, new_name: gpu_clock_mhz}
+      - {include: npu_chip_info_bandwidth_rx, match_type: strict, action: update, new_name: gpu_pcie_rx_bytes}
+      - {include: npu_chip_info_bandwidth_tx, match_type: strict, action: update, new_name: gpu_pcie_tx_bytes}
+      - {include: npu_chip_info_hbm_bandwidth_utilization, match_type: strict, action: update, new_name: gpu_hbm_bandwidth_ratio}
+
+  transform/huawei_units:
     error_mode: ignore
     metric_statements:
       - context: datapoint
         statements:
           - set(value_double, value_double / 100.0) where metric.name == "gpu_utilization_ratio" and value_double > 1.0
           - set(value_double, value_double / 100.0) where metric.name == "gpu_memory_usage_ratio" and value_double > 1.0
+          - set(value_double, value_double / 100.0) where metric.name == "gpu_hbm_bandwidth_ratio" and value_double > 1.0

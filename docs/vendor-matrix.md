@@ -5,7 +5,7 @@
 | 厂商 | 型号/系列 | exporter | 采集端口示例 | 当前配置文件 | 原始指标映射完整度 | 归一化输出 | 状态 |
 |---|---|---|---|---|---|---|---|
 | NVIDIA | H100/A800/H20/A100/V100/H800/B200/4090/3090 | dcgm-exporter | 可自定义，如 `9400`、`21001` | `configs/vendors/nvidia-dcgm.yaml` | 完整 | temperature, power, util, mem used/free/total/ratio, state | 已验证 |
-| 华为昇腾 | 910B/910C | npu-exporter | 可自定义，如 `8100`、`21001` | `configs/vendors/huawei-ascend.yaml` | 待补充原始 exporter 样例；当前保留标准化模板 | temperature, power, util, mem used/total/ratio | 已验证输出，待补原始映射 |
+| 华为昇腾 | 910B/910C | npu-exporter | 可自定义，如 `8100`、`21001` | `configs/vendors/huawei-ascend.yaml` | 完整 | temperature, power, util, mem used/total/ratio, hbm temp/bandwidth, state, clocks | 已验证 |
 | 天数智芯 | BIV100/BIV150/MRV100/TGV200 | ix-exporter | 可自定义，如 `21001` | `configs/vendors/iluvatar-tianshu.yaml` | 完整 | temperature, power, util, mem total/used/ratio | 已验证 |
 | 摩尔线程 | S5000 | mtgpu-exporter | 可自定义，如 `21001` | `configs/vendors/mthreads-s5000.yaml` | 完整 | temperature, power, util, mem total/used/ratio | 已验证 |
 | 沐曦 | MC550 | mx-exporter | 可自定义，如 `8100`、`21001` | `configs/vendors/muxi-mc550.yaml` | 完整 | temperature, power, util, mem total/used/ratio | 已验证 |
@@ -142,9 +142,49 @@ node_xpu_xpuDevicesNum
 
 如果使用的是直接暴露厂商私有 metric 名的 native Enflame exporter，需要补充该 exporter 的 `/metrics` 样例后，再增加“私有 metric 名 → `gpu_*`”的严格重命名规则。
 
-### 华为昇腾
+### 华为昇腾 / Huawei Ascend 910B/910C
 
-华为昇腾目前仓库中保留的是标准化模板，适用于已经输出或已经被预处理为 `gpu_*` 标准指标的 exporter 链路。严格的“原始 exporter 指标名 → `gpu_*`”映射需要补充对应 exporter 的 `/metrics` 样例后再固化。
+| 原始指标 | 归一化指标 | 说明 |
+|---|---|---|
+| `npu_chip_info_temperature` | `gpu_temperature` | NPU 芯片温度 |
+| `npu_chip_info_power` | `gpu_power_usage_watts` | 当前功耗 |
+| `npu_chip_info_ai_core_utilization` | `gpu_utilization_ratio` | AI Core 利用率，配置中统一到 0-1 |
+| `npu_chip_info_hbm_total_memory` | `gpu_memory_total_bytes` | HBM 总量 |
+| `npu_chip_info_hbm_used_memory` | `gpu_memory_used_bytes` | HBM 已用 |
+| `npu_chip_info_hbm_utilization` | `gpu_memory_usage_ratio` | HBM 使用率，配置中统一到 0-1 |
+| `npu_chip_info_hbm_temperature` | `gpu_hbm_temperature` | HBM 温度 |
+| `npu_chip_info_health_status` | `gpu_state` | 健康状态 |
+| `npu_chip_info_aicore_current_freq` | `gpu_clock_mhz` | AI Core 当前频率 |
+| `npu_chip_info_bandwidth_rx` | `gpu_pcie_rx_bytes` | 接收带宽/流量指标，具体单位以 exporter 为准 |
+| `npu_chip_info_bandwidth_tx` | `gpu_pcie_tx_bytes` | 发送带宽/流量指标，具体单位以 exporter 为准 |
+| `npu_chip_info_hbm_bandwidth_utilization` | `gpu_hbm_bandwidth_ratio` | HBM 带宽利用率，配置中统一到 0-1 |
+| `machine_npu_nums` | `machine_npu_nums` | 机器 NPU 数量，透传辅助指标 |
+
+当前样例中还可见以下华为原始指标，可按需扩展到网络、HCCS、RoCE、光模块、ECC 等告警：
+
+```text
+npu_chip_info_hbm_ecc_double_bit_error_cnt
+npu_chip_info_hbm_ecc_single_bit_error_cnt
+npu_chip_info_hbm_ecc_total_double_bit_error_cnt
+npu_chip_info_hbm_ecc_total_single_bit_error_cnt
+npu_chip_info_hccs_bandwidth_info_total_rx
+npu_chip_info_hccs_bandwidth_info_total_tx
+npu_chip_info_link_status
+npu_chip_info_network_status
+npu_chip_info_overall_utilization
+npu_chip_info_process_info
+npu_chip_info_process_info_num
+npu_chip_info_serial_number
+npu_chip_info_utilization
+npu_chip_info_vector_utilization
+npu_chip_info_voltage
+npu_chip_link_speed
+npu_chip_link_up_num
+npu_chip_optical_state
+npu_chip_roce_rx_err_pkt_num
+npu_chip_roce_tx_err_pkt_num
+npu_exporter_version_info
+```
 
 ### 寒武纪 / Cambricon
 
