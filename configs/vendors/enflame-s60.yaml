@@ -1,19 +1,37 @@
-# Enflame / 燧原 S60 template.
+# Enflame / 燧原 S60 normalization.
 #
-# Field deployment has verified normalized output:
-#   gpu_type: Enflame_S60-48GB
+# The verified S60 input used here is a pre-normalized GCU exporter /
+# normalizer output. It already exposes gpu_* metric names, plus optional
+# clock and target health metrics:
+#   gpu_temperature
+#   gpu_power_usage_watts
+#   gpu_utilization_ratio
+#   gpu_memory_total_bytes
+#   gpu_memory_used_bytes
+#   gpu_memory_free_bytes
+#   gpu_memory_usage_ratio
+#   gpu_clock_mhz
+#   gpu_mem_clock_mhz
+#   gcu_normalizer_target_up
 #
-# TODO before open-source GA:
-#   Add raw S60 exporter sample output and strict metric rename rules.
+# If you use a native Enflame exporter that exposes vendor-specific names
+# instead of gpu_* names, add strict rename rules before this processor.
 processors:
-  metricstransform/enflame_template:
+  filter/enflame:
+    error_mode: ignore
+    metrics:
+      metric:
+        - not IsMatch(name, "^gpu_temperature$|^gpu_power_usage_watts$|^gpu_utilization_ratio$|^gpu_memory_total_bytes$|^gpu_memory_used_bytes$|^gpu_memory_free_bytes$|^gpu_memory_usage_ratio$|^gpu_clock_mhz$|^gpu_mem_clock_mhz$|^gcu_normalizer_target_up$")
+
+  metricstransform/enflame:
     transforms:
-      - include: ^(s60|enflame).*
+      - include: ^(gpu_|gcu_normalizer_).*
         match_type: regexp
         action: update
         operations:
           - {action: add_label, new_label: gpu_vendor, new_value: enflame}
-  transform/enflame_units_template:
+
+  transform/enflame_units:
     error_mode: ignore
     metric_statements:
       - context: datapoint

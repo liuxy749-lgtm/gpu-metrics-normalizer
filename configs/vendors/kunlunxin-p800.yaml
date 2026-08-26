@@ -1,20 +1,45 @@
-# Kunlunxin / 昆仑芯 P800 template.
+# Kunlunxin / 昆仑芯 P800 xpu-exporter normalization.
 #
-# Field deployment has verified normalized output:
-#   gpu_vendor in {"Kunlunxin", "kunlunxin"}
+# Verified raw metric family:
+#   node_xpu_*
+#
+# Typical normalized labels:
+#   gpu_vendor: kunlunxin
 #   gpu_type: P800 OAM
 #
-# TODO before open-source GA:
-#   Add raw xpu-exporter sample output and strict metric rename rules.
+# Label names may vary across xpu-exporter versions. Keep dev_id/gpu_type
+# relabel operations aligned with the labels exposed by your exporter.
 processors:
-  metricstransform/kunlunxin_template:
+  filter/kunlunxin:
+    error_mode: ignore
+    metrics:
+      metric:
+        - not IsMatch(name, "^node_xpu_temp$|^node_xpu_powerUsage$|^node_xpu_utilization$|^node_xpu_memtotal$|^node_xpu_memused$|^node_xpu_memfree$|^node_xpu_memutil$|^node_xpu_state$|^node_xpu_xidCount$|^node_xpu_totalEccCorrectedErrors$|^node_xpu_totalEccUncorrectedErrors$|^node_xpu_xpuLinkState$")
+
+  metricstransform/kunlunxin:
     transforms:
-      - include: ^(xpu|kunlun|klx).*
+      - include: ^node_xpu_.*
         match_type: regexp
         action: update
         operations:
+          - {action: update_label, label: card, new_label: dev_id}
+          - {action: update_label, label: device, new_label: dev_id}
+          - {action: update_label, label: name, new_label: gpu_type}
           - {action: add_label, new_label: gpu_vendor, new_value: kunlunxin}
-  transform/kunlunxin_units_template:
+      - {include: node_xpu_temp, match_type: strict, action: update, new_name: gpu_temperature}
+      - {include: node_xpu_powerUsage, match_type: strict, action: update, new_name: gpu_power_usage_watts}
+      - {include: node_xpu_utilization, match_type: strict, action: update, new_name: gpu_utilization_ratio}
+      - {include: node_xpu_memtotal, match_type: strict, action: update, new_name: gpu_memory_total_bytes}
+      - {include: node_xpu_memused, match_type: strict, action: update, new_name: gpu_memory_used_bytes}
+      - {include: node_xpu_memfree, match_type: strict, action: update, new_name: gpu_memory_free_bytes}
+      - {include: node_xpu_memutil, match_type: strict, action: update, new_name: gpu_memory_usage_ratio}
+      - {include: node_xpu_state, match_type: strict, action: update, new_name: gpu_state}
+      - {include: node_xpu_xidCount, match_type: strict, action: update, new_name: gpu_xid_errors_total}
+      - {include: node_xpu_totalEccCorrectedErrors, match_type: strict, action: update, new_name: gpu_ecc_corrected_errors_total}
+      - {include: node_xpu_totalEccUncorrectedErrors, match_type: strict, action: update, new_name: gpu_ecc_uncorrected_errors_total}
+      - {include: node_xpu_xpuLinkState, match_type: strict, action: update, new_name: gpu_link_state}
+
+  transform/kunlunxin_units:
     error_mode: ignore
     metric_statements:
       - context: datapoint
