@@ -104,28 +104,7 @@
 | `node_xpu_totalEccUncorrectedErrors` | `gpu_ecc_uncorrected_errors_total` | ECC 不可纠正错误计数 |
 | `node_xpu_xpuLinkState` | `gpu_link_state` | XPU Link 状态 |
 
-当前 Prometheus 中还可见以下昆仑芯原始指标，暂不进入核心五项归一化输出，可按需扩展：
-
-```text
-node_xpu_clock
-node_xpu_computeRunningProcesses
-node_xpu_currentEccMode
-node_xpu_cxpuInstanceCount
-node_xpu_cxpuMaxInstanceCount
-node_xpu_cxpuMemoryFree
-node_xpu_cxpuMemoryTotal
-node_xpu_cxpuMemoryUsed
-node_xpu_l3free
-node_xpu_l3total
-node_xpu_l3used
-node_xpu_l3util
-node_xpu_pendingEccMode
-node_xpu_xpuDevicesNum
-```
-
 ### 燧原 / Enflame S60
-
-已验证的 S60 原始 exporter 为 `local/gcu-exporter:1.5.21`，监听端口可通过启动参数自定义。样例中 exporter 使用 `--web.listen-address=:21001`，原始指标前缀为 `enflame_gcu_*`。
 
 | 原始指标 | 归一化指标 | 说明 |
 |---|---|---|
@@ -146,27 +125,6 @@ node_xpu_xpuDevicesNum
 | `enflame_gcu_exporter_up` | `gpu_exporter_up` | exporter 采集状态 |
 | `enflame_gcu_count` | `machine_gpu_count` | 机器 GCU 数量 |
 
-样例中确认的关键标签：
-
-```text
-minor_number -> dev_id
-name         -> gpu_type
-host         -> hostname
-uuid         -> device UUID
-busid        -> PCI bus path
-```
-
-当前样例中还可见以下燧原原始指标，可按需扩展：
-
-```text
-enflame_gcu_info
-enflame_gcu_pcie_link_width
-enflame_gcu_pcie_max_link_width
-enflame_gcu_scrape_collector_duration_seconds
-enflame_gcu_scrape_collector_success
-enflame_gcu_virt_mode
-gcu_exporter_build_info
-```
 
 ### 华为昇腾 / Huawei Ascend 910B/910C
 
@@ -185,32 +143,6 @@ gcu_exporter_build_info
 | `npu_chip_info_bandwidth_tx` | `gpu_pcie_tx_bytes` | 发送带宽/流量指标，具体单位以 exporter 为准 |
 | `npu_chip_info_hbm_bandwidth_utilization` | `gpu_hbm_bandwidth_ratio` | HBM 带宽利用率，配置中统一到 0-1 |
 | `machine_npu_nums` | `machine_npu_nums` | 机器 NPU 数量，透传辅助指标 |
-
-当前样例中还可见以下华为原始指标，可按需扩展到网络、HCCS、RoCE、光模块、ECC 等告警：
-
-```text
-npu_chip_info_hbm_ecc_double_bit_error_cnt
-npu_chip_info_hbm_ecc_single_bit_error_cnt
-npu_chip_info_hbm_ecc_total_double_bit_error_cnt
-npu_chip_info_hbm_ecc_total_single_bit_error_cnt
-npu_chip_info_hccs_bandwidth_info_total_rx
-npu_chip_info_hccs_bandwidth_info_total_tx
-npu_chip_info_link_status
-npu_chip_info_network_status
-npu_chip_info_overall_utilization
-npu_chip_info_process_info
-npu_chip_info_process_info_num
-npu_chip_info_serial_number
-npu_chip_info_utilization
-npu_chip_info_vector_utilization
-npu_chip_info_voltage
-npu_chip_link_speed
-npu_chip_link_up_num
-npu_chip_optical_state
-npu_chip_roce_rx_err_pkt_num
-npu_chip_roce_tx_err_pkt_num
-npu_exporter_version_info
-```
 
 ### 寒武纪 / Cambricon
 
