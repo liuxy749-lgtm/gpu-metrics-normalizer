@@ -35,18 +35,6 @@
 | `gpu_power_usage_watts` | 当前功耗 | watts |
 | `gpu_temperature` | 当前温度 | celsius |
 
-为了兼容人工排查和旧脚本，以下字段仍会保留：
-
-```text
-gpu_utilization_percent
-memory_usage_ratio
-memory_total_bytes
-memory_used_bytes
-memory_free_bytes
-power_watts
-temperature_c
-```
-
 ## 型号归一化
 
 不同厂商工具返回的型号名并不稳定，例如同一类卡可能出现空格、大小写、后缀不同的写法。`gpu_model_mapping.py` 维护这些别名，并统一输出稳定的 `gpu_type`。
