@@ -2,19 +2,44 @@
 
 这套配置用于把不同厂商 GPU/NPU/加速卡 exporter 暴露的 Prometheus 指标，通过 OpenTelemetry Collector 归一化为一组稳定的 `gpu_*` 指标，方便后续接入 Prometheus 兼容存储、告警系统和 Grafana 看板。
 
-已整理的归一化配置覆盖：
+仓库分为两类能力：
 
-- NVIDIA：H100、A800、H20、A100、V100、H800、B200、4090、3090
-- 华为昇腾：910B、910C
-- 天数智芯：BIV100、BIV150、MRV100、TGV200
-- 摩尔线程：S5000
-- 沐曦：MC550
-- 昆仑芯：P800
-- 海光：BW1000、BW200/DCU
-- 清微：TX81、TX8110
-- 燧原：S60
+- `configs/`：面向 OpenTelemetry Collector 的 exporter 指标归一化配置。
+- `collectors/gpu_info/`：面向 GPU 节点本机巡检的轻量 JSON 采集脚本。
 
-寒武纪 MLU590 暂未纳入配置。
+这两类能力的适配清单不完全一致。`configs/` 关注已经验证过 exporter 原始指标的归一化链路；`collectors/gpu_info/` 关注本机 SMI/sysfs 能否被脚本解析。
+
+## Exporter / OTel 归一化适配清单
+
+| 厂商 | 型号/系列 | exporter | 配置状态 |
+|---|---|---|---|
+| NVIDIA | H100、A800、H20、A100、V100、H800、B200、4090、3090 | dcgm-exporter | 已适配 |
+| 华为昇腾 | 910B、910C | npu-exporter | 已适配 |
+| 天数智芯 | BIV100、BIV150、MRV100、TGV200 | ix-exporter | 已适配 |
+| 摩尔线程 | S5000 | mtgpu-exporter | 已适配 |
+| 沐曦 | MC550 | mx-exporter | 已适配 |
+| 昆仑芯 | P800 | xpu-exporter | 已适配 |
+| 海光 DCU | BW1000、BW200/DCU | dcu-exporter | 已适配 |
+| 清微 | TX81、TX8110 | tx-exporter | 已适配 |
+| 燧原 | S60 | gcu-exporter | 已适配 |
+| 寒武纪 | MLU590 | 待确认 | 暂未配置 |
+
+## 本机 JSON 采集脚本适配清单
+
+| 厂商 | 型号/系列 | 数据源 | 脚本状态 |
+|---|---|---|---|
+| NVIDIA | nvidia-smi 可识别的数据中心卡和消费卡 | `nvidia-smi` | 已适配 |
+| 华为昇腾 | 910B、910C | `npu-smi` | 已适配 |
+| 天数智芯 | BIV100、BIV150、MRV100、TGV200 | `ixsmi` | 已适配 |
+| 摩尔线程 | S5000 | `mthreads-gmi` | 已适配 |
+| 沐曦 | MC550 | `mx-smi` | 已适配 |
+| 昆仑芯 | P800 | `xpu-smi` | 已适配 |
+| 海光 DCU | BW1000/DCU | `/sys/class/drm` + `hwmon` | 已适配 |
+| 清微 | TX81、TX8110 | `tsm_smi` | 已适配 |
+| 燧原 | S60 | `efsmi` | 已适配 |
+| 平头哥 | PPU-ZW810E | `ppu-smi` | 已适配脚本；暂无 OTel 配置片段 |
+| 曦望 | S2 | `pt_smi` | 已适配脚本；暂无 OTel 配置片段 |
+| 寒武纪 | MLU590 | 待确认 | 暂未适配 |
 
 ## 部署拓扑
 
@@ -28,7 +53,7 @@ flowchart LR
 
 典型链路是每台 GPU 节点运行对应厂商 exporter，OpenTelemetry Collector 负责采集 exporter 指标并完成过滤、重命名、单位换算和标签标准化，再上报到 VictoriaMetrics/vmstorage，最终由 Prometheus 和 Grafana 统一查询、告警和展示。
 
-仓库同时提供一组可选的主机侧采集脚本 `collectors/gpu_info`。这些脚本直接调用本机厂商 SMI 工具或 sysfs，把每张卡的信息输出为统一 JSON，适合做轻量巡检、边缘节点采集或对 exporter 链路进行旁路校验。
+仓库同时提供一组可选的主机侧采集脚本 `collectors/gpu_info`。这些脚本直接调用本机厂商 SMI 工具或 sysfs，把每张卡的信息输出为统一 JSON，适合做轻量巡检、边缘节点采集或对 exporter 链路进行旁路校验。脚本适配成功不等于已经提供对应 OTel exporter 配置；是否具备完整归一化链路，以 `configs/vendors/` 和 [docs/vendor-matrix.md](docs/vendor-matrix.md) 为准。
 
 ## 统一输出指标
 
