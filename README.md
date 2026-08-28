@@ -35,7 +35,7 @@
 | 沐曦 | MC550 | `mx-smi` | 已适配 |
 | 昆仑芯 | P800 | `xpu-smi` | 已适配 |
 | 海光 DCU | BW1000/DCU | `/sys/class/drm` + `hwmon` | 已适配 |
-| 清微 | TX81、TX8110 | `tsm_smi` | 已适配 |
+| 清微 | TX81 | `tsm_smi` | 已适配 |
 | 燧原 | S60 | `efsmi` | 已适配 |
 | 平头哥 | PPU-ZW810E | `ppu-smi` | 已适配脚本；暂无 OTel 配置片段 |
 | 曦望 | S2 | `pt_smi` | 已适配脚本；暂无 OTel 配置片段 |
