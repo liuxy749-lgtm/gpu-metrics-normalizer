@@ -20,7 +20,7 @@
 | 沐曦 | MC550 | mx-exporter | 已适配 |
 | 昆仑芯 | P800 | xpu-exporter | 已适配 |
 | 海光 DCU | BW1000、BW200/DCU | dcu-exporter | 已适配 |
-| 清微 | TX81、TX8110 | tx-exporter | 已适配 |
+| 清微 | TX81 | tx-exporter | 已适配 |
 | 燧原 | S60 | gcu-exporter | 已适配 |
 | 寒武纪 | MLU590 | 待确认 | 暂未配置 |
 
