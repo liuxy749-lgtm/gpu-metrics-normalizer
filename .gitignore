@@ -1,0 +1,8 @@
+__pycache__/
+*.py[cod]
+*.log
+.env
+env.conf
+collectors/gpu_info/env.conf
+gpu_info-*.tgz
+*.tmp

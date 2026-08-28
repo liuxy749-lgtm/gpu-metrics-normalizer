@@ -28,6 +28,8 @@ flowchart LR
 
 典型链路是每台 GPU 节点运行对应厂商 exporter，OpenTelemetry Collector 负责采集 exporter 指标并完成过滤、重命名、单位换算和标签标准化，再上报到 VictoriaMetrics/vmstorage，最终由 Prometheus 和 Grafana 统一查询、告警和展示。
 
+仓库同时提供一组可选的主机侧采集脚本 `collectors/gpu_info`。这些脚本直接调用本机厂商 SMI 工具或 sysfs，把每张卡的信息输出为统一 JSON，适合做轻量巡检、边缘节点采集或对 exporter 链路进行旁路校验。
+
 ## 统一输出指标
 
 所有厂商最终统一为以下指标：
@@ -73,6 +75,12 @@ gpu-metrics-normalizer/
 │       ├── hygon-dcu.yaml
 │       ├── tsingmicro-tx.yaml
 │       └── enflame-s60.yaml
+├── collectors/
+│   └── gpu_info/
+│       ├── main_server_monitor.py
+│       ├── gpu_model_mapping.py
+│       ├── env.example
+│       └── <vendor>/*_info.py
 ├── examples/
 │   ├── docker-compose.yaml
 │   └── otel.env.example
@@ -113,8 +121,8 @@ gpu-metrics-normalizer/
    ```yaml
    static_configs:
      - targets:
-         - 10.0.0.1:21001
-         - 10.0.0.2:21001
+         - 192.0.2.10:21001
+         - 192.0.2.11:21001
        labels:
          region: example-region
          zone: example-zone
@@ -141,6 +149,31 @@ gpu-metrics-normalizer/
    count by(gpu_vendor,gpu_type)(gpu_power_usage_watts)
    count by(gpu_vendor,gpu_type)(gpu_temperature)
    ```
+
+## 可选：主机侧 JSON 采集器
+
+`collectors/gpu_info` 提供了一组轻量脚本，可以在 GPU 节点本机运行：
+
+```bash
+cd collectors/gpu_info
+python3 nvidia/nvidia_gpu_info.py --json
+python3 suiyuan/enflame_s60_info.py --json
+```
+
+也可以使用主服务自动探测厂商并周期上报：
+
+```bash
+cp env.example env.conf
+python3 main_server_monitor.py
+```
+
+开源版默认不会输出 SN、UUID、unique_id、主板序列号等资产唯一标识。如确实需要在内部环境做资产级定位，可显式设置：
+
+```bash
+ENABLE_DEVICE_ID=1 python3 nvidia/nvidia_gpu_info.py --json
+```
+
+详见 [collectors/gpu_info/README.md](collectors/gpu_info/README.md)。
 
 ## 设计约定
 
