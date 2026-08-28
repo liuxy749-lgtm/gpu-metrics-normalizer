@@ -77,7 +77,7 @@ python3 main_server_monitor.py
 
 ## 配置
 
-`env.example` 是示例配置。不要把包含真实上报地址、token 或内部路径的 `env.conf` 提交到仓库。
+`env.example` 示例配置。
 
 常用配置项：
 
